@@ -49,7 +49,7 @@ const updateFlow = (flowId, changes) => {
     return updateFlow;
 };
 
-const deleteFlow = (workoutId) => {
+const deleteFlow = (flowId) => {
     const indexForDelete = DB.flows.findIndex(
         (flow) => (flow.id === flowId)
     );

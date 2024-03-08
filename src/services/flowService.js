@@ -1,31 +1,47 @@
-const { v4: uuid } = require("uuid"); 
-const Flow = require("../database/Flow");
+const Flow = require("../models/Flow");
 
-const getAllFlows = () => {
-    const allFlows = Flow.getAllFlows();
-    return allFlows;
+// Get todos los flujos de trabajo
+const getAllFlows = async () => {
+    return await Flow.find();
 };
-const getOneFlow = (flowId) => {
-    const flow = Flow.getOneFlow(flowId);
-    return flow;
+
+// Get del flujo de trabajo que tenga el Id pasado por parámetro
+const getOneFlow = async (flowId) => {
+    return await Flow.findById(flowId);
 };
-const createNewFlow = (newFlow) => {
-    const flowToInsert = {
-        ...newFlow,
-        id: uuid(),
-        creation_date: new Date().toLocaleString("en-US", { timezone: "UTC"} ),
-        last_update: new Date().toLocaleString("en-US", { timezone: "UTC"} )
+
+
+// Crear un nuevo flujo de trabajo
+const createNewFlow = async (newFlow) => {
+    try {
+        const createdFlow = await Flow.create(newFlow);
+        return createdFlow;
+    } catch (error) {
+        throw error;
     }
+};
 
-    const createdFlow = Flow.createNewFlow(flowToInsert);
-    return createdFlow;
+// Actualizar el flujo de trabajo el cuál se pasa el Id por parámetro
+const updateFlow = async (flowId, changes) => {
+    try {
+        changes.last_update = Date().toLocaleString("en-US", { timezone: "UTC"} );
+        return await Flow.findByIdAndUpdate(flowId, changes, { new: true });
+    } catch (error) {
+        throw new Error("Failed to update flow in the database");
+    }
 };
-const updateFlow = (flowId, changes) => {
-    const updateFlow = Flow.updateFlow(flowId,changes);
-    return updateFlow;
-};
-const deleteFlow = () => {
-    Flow.deleteFlow(flowId);
+
+
+// eliminar un flujo de trabajo
+const deleteFlow = async (flowId) => {
+    try {
+        const deletedFlow = await Flow.findByIdAndDelete(flowId);
+        if (!deletedFlow) {
+            throw new Error("Flow not found");
+        }
+    } catch (error) {
+        throw new Error(`Failed to delete flow: ${error.message}`);
+    }
 };
 
 module.exports = {
