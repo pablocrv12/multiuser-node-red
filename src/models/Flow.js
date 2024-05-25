@@ -19,8 +19,7 @@ const UserSchema = new mongoose.Schema(
             required: true
         },
         nodes:{
-            type: mongoose.Schema.Types.Mixed,
-            default: {}
+            type: String,
         },
         userId:{
             type: String, //mongoose.Schema.Types.ObjectId,

@@ -1,17 +1,13 @@
 const Flow = require("../models/Flow");
 
-// Get todos los flujos de trabajo
-const getAllFlows = async () => {
-    return await Flow.find();
+const getAllFlows = async (userId) => {
+    return await Flow.find({ userId });
 };
 
-// Get del flujo de trabajo que tenga el Id pasado por parámetro
-const getOneFlow = async (flowId) => {
-    return await Flow.findById(flowId);
+const getOneFlow = async (userId, flowId) => {
+    return await Flow.findOne({ _id: flowId, userId });
 };
 
-
-// Crear un nuevo flujo de trabajo
 const createNewFlow = async (newFlow) => {
     try {
         const createdFlow = await Flow.create(newFlow);
@@ -21,21 +17,18 @@ const createNewFlow = async (newFlow) => {
     }
 };
 
-// Actualizar el flujo de trabajo el cuál se pasa el Id por parámetro
-const updateFlow = async (flowId, changes) => {
+const updateFlow = async (userId, flowId, changes) => {
     try {
-        changes.last_update = Date().toLocaleString("en-US", { timezone: "UTC"} );
-        return await Flow.findByIdAndUpdate(flowId, changes, { new: true });
+        changes.last_update = new Date().toLocaleString("en-US", { timeZone: "UTC" });
+        return await Flow.findOneAndUpdate({ _id: flowId, userId }, changes, { new: true });
     } catch (error) {
         throw new Error("Failed to update flow in the database");
     }
 };
 
-
-// eliminar un flujo de trabajo
-const deleteFlow = async (flowId) => {
+const deleteFlow = async (userId, flowId) => {
     try {
-        const deletedFlow = await Flow.findByIdAndDelete(flowId);
+        const deletedFlow = await Flow.findOneAndDelete({ _id: flowId, userId });
         if (!deletedFlow) {
             throw new Error("Flow not found");
         }

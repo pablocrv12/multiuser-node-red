@@ -9,6 +9,7 @@ const path = require('path');
 const UserModel = require('./models/User')
 const { hashSync, compareSync } = require('bcrypt');
 const jwt = require('jsonwebtoken')
+const { exec } = require('child_process');
 
 
 const app = express();
@@ -35,20 +36,18 @@ app.get('/register', (req, res) => {
 
 app.post('/login', (req, res) => {
     UserModel.findOne({ email: req.body.email }).then(user => {
-        //No user found
         if (!user) {
             return res.status(401).send({
                 success: false,
                 message: "Could not find the user."
-            })
+            });
         }
 
-        //Incorrect password
         if (!compareSync(req.body.password, user.password)) {
             return res.status(401).send({
                 success: false,
                 message: "Incorrect password"
-            })
+            });
         }
 
         const payload = {
@@ -56,15 +55,16 @@ app.post('/login', (req, res) => {
             id: user._id
         }
 
-        const token = jwt.sign(payload, "Random string", { expiresIn: "1d" })
+        const token = jwt.sign(payload, "Random string", { expiresIn: "5m" });
 
         return res.status(200).send({
             success: true,
             message: "Logged in successfully!",
-            token: "Bearer " + token
-        })
-    })
-})
+            token: "Bearer " + token,
+            userId: user._id // Enviar el userId al cliente
+        });
+    });
+});
 
 app.post('/register', (req, res) => {
     const user = new UserModel({
@@ -91,7 +91,15 @@ app.post('/register', (req, res) => {
 })
 
 app.get('/logout', (req, res) => {
-
+    // Eliminar el token JWT del cliente
+    // Puedes utilizar localStorage.removeItem() o sessionStorage.removeItem() según dónde esté almacenado el token en el cliente
+    //res.clearCookie('jwtToken'); // Si estás utilizando cookies para almacenar el token
+    
+    // Opcional: Invalidar el token en el servidor
+    // Agrega el token a una lista negra de tokens revocados o realiza cualquier otra acción necesaria para invalidar el token
+    
+    // Redirigir al usuario a la página de inicio de sesión
+    //res.redirect('/login');
 });
 
 app.get('/protected', passport.authenticate('jwt', { session: false }), (req, res) => {
@@ -103,6 +111,29 @@ app.get('/protected', passport.authenticate('jwt', { session: false }), (req, re
         }
     })
 })
+
+app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const userId = req.user._id;
+
+    const command = `docker run -d -e JWT_TOKEN="${token}" --name nodered-${userId} -p 1880:1880 node-red-modified:latest`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error launching Node-RED container: ${error}`);
+            return res.status(500).send({
+                success: false,
+                message: 'Error launching Node-RED container',
+                error: error.message
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: 'Node-RED container started successfully',
+            containerId: stdout.trim()
+        });
+    });
+});
 
 
 app.use("/api/v1/flow", v1FlowRouter);

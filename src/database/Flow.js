@@ -1,14 +1,14 @@
 const DB = require("./db.json");
 const { saveToDatabase } = require("./utils");
 
-const getAllFlows = () => {
-    return DB.flows;
+const getAllFlows = (userId) => {
+    return DB.flows.filter(flow => flow.userId === userId);
 };
 
-const getOneFlow = (flowId) => {
+const getOneFlow = (userId, flowId) => {
     const flow = DB.flows.find(
-        (flow) => (flow.id === flowId)
-        );
+        (flow) => flow.id === flowId && flow.userId === userId
+    );
 
     if (!flow) {
         return;
@@ -18,49 +18,50 @@ const getOneFlow = (flowId) => {
 };
 
 const createNewFlow = (newFlow) => {
-    const isAlreadyAdded = DB.flows.findIndex((flow) => flow.name === newFlow.name) > -1;
+    const isAlreadyAdded = DB.flows.findIndex((flow) => flow.name === newFlow.name && flow.userId === newFlow.userId) > -1;
 
-    if(isAlreadyAdded){
+    if (isAlreadyAdded) {
         return;
     }
 
     DB.flows.push(newFlow);
     saveToDatabase(DB);
     return newFlow;
-} 
+};
 
-const updateFlow = (flowId, changes) => {
+const updateFlow = (userId, flowId, changes) => {
     const indexForUpdated = DB.flows.findIndex(
-        (flow) => (flow.id === flowId)
-    ); 
+        (flow) => flow.id === flowId && flow.userId === userId
+    );
 
-    if(indexForUpdated === -1){
+    if (indexForUpdated === -1) {
         return;
     }
 
-    const updateFlow = {
+    const updatedFlow = {
         ...DB.flows[indexForUpdated],
         ...changes,
-        last_update: new Date().toLocaleString("en-US", { timeZone: "UTC"})
+        last_update: new Date().toLocaleString("en-US", { timeZone: "UTC" })
     };
 
-    DB.flows[indexForUpdated] = updateFlow;
+    DB.flows[indexForUpdated] = updatedFlow;
     saveToDatabase(DB);
-    return updateFlow;
+    return updatedFlow;
 };
 
-const deleteFlow = (flowId) => {
+const deleteFlow = (userId, flowId) => {
     const indexForDelete = DB.flows.findIndex(
-        (flow) => (flow.id === flowId)
+        (flow) => flow.id === flowId && flow.userId === userId
     );
 
-    if(indexForDelete === -1){
+    if (indexForDelete === -1) {
         return;
     }
 
     DB.flows.splice(indexForDelete, 1);
     saveToDatabase(DB);
-}
+};
+
 
 module.exports = {
 getAllFlows,
