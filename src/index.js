@@ -6,34 +6,24 @@ const v1UserRouter = require("./v1/routes/userRoutes");
 const v1noderedRouter = require("./v1/routes/noderedRoutes");
 const initDb = require("./config/db");
 const path = require('path');
-const UserModel = require('./models/User')
+const UserModel = require('./models/User');
 const { hashSync, compareSync } = require('bcrypt');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 const { exec } = require('child_process');
 
-
 const app = express();
-
-
 const PORT = process.env.PORT || 3000;
 
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs')
+app.set('view engine', 'ejs');
 app.use(express.json());
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(passport.initialize())
+app.use(passport.initialize());
 
-require('./config/passport')
+require('./config/passport');
 
-app.get('/login', (req,res) => {
-    res.render('login')
-})  
-
-app.get('/register', (req, res) => {
-    res.render('register')
-})
-
+// Ruta de inicio de sesión
 app.post('/login', (req, res) => {
     UserModel.findOne({ email: req.body.email }).then(user => {
         if (!user) {
@@ -50,58 +40,50 @@ app.post('/login', (req, res) => {
             });
         }
 
-        const payload = {
-            email: user.email,
-            id: user._id
-        }
-
+        const payload = { email: user.email, id: user._id };
         const token = jwt.sign(payload, "Random string", { expiresIn: "5m" });
 
         return res.status(200).send({
             success: true,
             message: "Logged in successfully!",
             token: "Bearer " + token,
-            userId: user._id // Enviar el userId al cliente
+            userId: user._id
         });
     });
 });
 
+// Ruta de registro
 app.post('/register', (req, res) => {
+    const { email, password, role, name } = req.body;
     const user = new UserModel({
-        email: req.body.email,
-        password: hashSync(req.body.password, 10)
-    })
-    
+        email,
+        password: hashSync(password, 10),
+        role, // Guardar el rol como cadena
+        name // Guardar el nombre
+    });
+
     user.save().then(user => {
         res.send({
             success: true,
             message: "User created successfully.",
             user: {
                 id: user._id,
-                email: user.email
+                email: user.email,
+                role: user.role, // Devolver el rol del usuario
+                name: user.name // Devolver el nombre del usuario
             }
-        })
+        });
     }).catch(err => {
-        res.send({
+        res.status(500).send({
             success: false,
             message: "Something went wrong",
-            error: err
-        })
-    })
-})
-
-app.get('/logout', (req, res) => {
-    // Eliminar el token JWT del cliente
-    // Puedes utilizar localStorage.removeItem() o sessionStorage.removeItem() según dónde esté almacenado el token en el cliente
-    //res.clearCookie('jwtToken'); // Si estás utilizando cookies para almacenar el token
-    
-    // Opcional: Invalidar el token en el servidor
-    // Agrega el token a una lista negra de tokens revocados o realiza cualquier otra acción necesaria para invalidar el token
-    
-    // Redirigir al usuario a la página de inicio de sesión
-    //res.redirect('/login');
+            error: err.message
+        });
+    });
 });
 
+
+// Ruta protegida
 app.get('/protected', passport.authenticate('jwt', { session: false }), (req, res) => {
     return res.status(200).send({
         success: true,
@@ -109,11 +91,13 @@ app.get('/protected', passport.authenticate('jwt', { session: false }), (req, re
             id: req.user._id,
             email: req.user.email,
         }
-    })
-})
+    });
+});
 
+// Iniciar Node-RED
 app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (req, res) => {
     const userId = req.user._id;
+    const token = req.headers.authorization.split(' ')[1]; // Obtener el token sin "Bearer"
 
     const command = `docker run -d -e JWT_TOKEN="${token}" --name nodered-${userId} -p 1880:1880 node-red-modified:latest`;
 
@@ -135,16 +119,15 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (re
     });
 });
 
-
+// Rutas adicionales
 app.use("/api/v1/flow", v1FlowRouter);
 app.use("/api/v1/user", v1UserRouter);
+app.use("/api/v1/class", v1FlowRouter);
 app.use("/api/v1/node", v1noderedRouter);
 
-
-
-// starting server
-app.listen(PORT,()=> {
-    console.log("servidor escuchando en el puerto: " +PORT);
+// Iniciar servidor
+app.listen(PORT, () => {
+    console.log("Server listening on port: " + PORT);
 });
 
 initDb();

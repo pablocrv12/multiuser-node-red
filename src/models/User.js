@@ -12,7 +12,20 @@ const UserSchema = new mongoose.Schema({
     },
     name: {
         type: String
-    }
+    },
+    role: {
+        type: String,
+        enum: ['admin', 'student', 'professor', 'user'],
+        default: 'user'
+    },
+    createdClasses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class' // Referencia al modelo de clase
+    }],
+    joinedClasses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class' // Referencia al modelo de clase
+    }]
 });
 
 module.exports = mongoose.model('User', UserSchema);
