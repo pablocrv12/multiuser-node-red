@@ -2,7 +2,7 @@ const flowService = require("../services/flowService");
 
 const getAllFlows = async (req, res) => {
     const userId = req.user._id; // Obtener el userId del usuario autenticado
-
+    console.log(userId)
     try {
         const allFlows = await flowService.getAllFlows(userId);
         res.status(200).json({ status: "Ok", data: allFlows });

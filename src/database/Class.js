@@ -1,13 +1,16 @@
 const DB = require("./db.json");
 const { saveToDatabase } = require("./utils");
+const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types;
 
 const getAllClases = (userId) => {
-    return DB.clases.filter(clase => clase.userId === userId);
+    return DB.classes.filter(clase => clase.professor === userId);
 };
 
-const getOneClase = (userId, claseId) => {
-    const clase = DB.clases.find(
-        (clase) => clase.id === claseId && clase.userId === userId
+
+const getOneClaseByProfessor = (userId, claseId) => {
+    const clase = DB.classes.find(
+        (clase) => clase.id === claseId && clase.professor === userId
     );
 
     if (!clase) {
@@ -17,8 +20,15 @@ const getOneClase = (userId, claseId) => {
     return clase;
 };
 
+const getFlowsByClase = async (userId, claseId) => {
+    const clase = await Clase.findOne({ _id: claseId, professor: userId }).populate('flows');
+    return clase ? clase.flows : null;
+};
+
+
+
 const createNewClase = (newClase) => {
-    const isAlreadyAdded = DB.clases.findIndex((clase) => clase.name === newClase.name && clase.userId === newClase.userId) > -1;
+    const isAlreadyAdded = DB.clases.findIndex((clase) => clase.name === newClase.name && clase.professor === newClase.professor) > -1;
 
     if (isAlreadyAdded) {
         return;
@@ -65,8 +75,9 @@ const deleteClase = (userId, claseId) => {
 
 module.exports = {
 getAllClases,
-getOneClase,
+getOneClaseByProfessor,
+getFlowsByClase,
 createNewClase,
-updateClase,
+updatedClase,
 deleteClase
 };

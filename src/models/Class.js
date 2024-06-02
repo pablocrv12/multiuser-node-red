@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const ClassSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
     professor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User', // Referencia al modelo de usuario

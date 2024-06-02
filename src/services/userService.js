@@ -7,7 +7,19 @@ const getAllUsers = async () => {
 
 // Get del usuario que tenga el Id pasado por parámetro
 const getOneUser = async (userId) => {
-    return await User.findById(UserId);
+    return await User.findById(userId);
+};
+
+const getJoinedClasses = async (userId) => {
+    try {
+        const user = await User.findById(userId).populate('joinedClasses');
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return user.joinedClasses;
+    } catch (error) {
+        throw new Error('Failed to retrieve joined classes');
+    }
 };
 
 
@@ -24,7 +36,6 @@ const createNewUser = async (newUser) => {
 // Actualizar el usuario el cuál se pasa el Id por parámetro
 const updateUser = async (userId, changes) => {
     try {
-        changes.last_update = Date().toLocaleString("en-US", { timezone: "UTC"} );
         return await User.findByIdAndUpdate(userId, changes, { new: true });
     } catch (error) {
         throw new Error("Failed to update user in the database");
@@ -44,10 +55,18 @@ const deleteUser = async (userId) => {
     }
 };
 
+// Obtener el rol del usuario con el ID proporcionado
+const getUserRole = async (userId) => {
+    return await User.findById(userId, 'role');
+};
+
+
 module.exports = {
     getAllUsers,
     getOneUser,
+    getJoinedClasses,
     createNewUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getUserRole
 }

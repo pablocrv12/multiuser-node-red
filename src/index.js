@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const passport = require('passport');
 const v1FlowRouter = require("./v1/routes/flowRoutes");
+const v1ClassRouter = require("./v1/routes/classRoutes");
 const v1UserRouter = require("./v1/routes/userRoutes");
 const v1noderedRouter = require("./v1/routes/noderedRoutes");
 const initDb = require("./config/db");
@@ -10,6 +11,7 @@ const UserModel = require('./models/User');
 const { hashSync, compareSync } = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { exec } = require('child_process');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,7 +43,7 @@ app.post('/login', (req, res) => {
         }
 
         const payload = { email: user.email, id: user._id };
-        const token = jwt.sign(payload, "Random string", { expiresIn: "5m" });
+        const token = jwt.sign(payload, "Random string", { expiresIn: "60m" });
 
         return res.status(200).send({
             success: true,
@@ -90,6 +92,7 @@ app.get('/protected', passport.authenticate('jwt', { session: false }), (req, re
         user: {
             id: req.user._id,
             email: req.user.email,
+            role: req.user.role
         }
     });
 });
@@ -119,10 +122,37 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (re
     });
 });
 
+
+// Configurar el transporte de Nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: "multiusernodered@gmail.com", // Almacenar en variables de entorno
+        pass: "multinoderedpass"  // Almacenar en variables de entorno
+    }
+});
+
+// Función para enviar correo de invitación
+const sendInviteEmail = (recipientEmail, className, inviteLink) => {
+    const mailOptions = {
+        from: "multiusernodered@gmail.com",
+        to: recipientEmail,
+        subject: `Invitación a la clase ${className}`,
+        text: `Has sido invitado a unirte a la clase ${className}. Usa el siguiente enlace para unirte: ${inviteLink}`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return console.log(error);
+        }
+        console.log('Email sent: ' + info.response);
+    });
+};
+
 // Rutas adicionales
 app.use("/api/v1/flow", v1FlowRouter);
 app.use("/api/v1/user", v1UserRouter);
-app.use("/api/v1/class", v1FlowRouter);
+app.use("/api/v1/class", v1ClassRouter);
 app.use("/api/v1/node", v1noderedRouter);
 
 // Iniciar servidor

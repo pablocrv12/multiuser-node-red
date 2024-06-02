@@ -1,27 +1,26 @@
-const claseService = require("../services/claseService");
+const classService = require("../services/classService");
+const userService = require("../services/userService");
 
 const getAllClases = async (req, res) => {
     const userId = req.user._id; // Obtener el userId del usuario autenticado
-
     try {
-        const allClases = await claseService.getAllClases(userId);
+        const allClases = await classService.getAllClases(userId);
         res.status(200).json({ status: "Ok", data: allClases });
     } catch (error) {
         console.error("Error getting all clases:", error);
         res.status(500).json({ status: "Error", message: "Failed to get all clases" });
     }
-};
+};  
 
 const getOneClase = async (req, res) => {
-    const userId = req.user._id;
-    const { params: { claseId } } = req;
+    const { params: { classId } } = req;
 
-    if (!claseId) {
+    if (!classId) {
         return res.status(400).json({ status: "Error", message: "Clase ID is required" });
     }
 
     try {
-        const clase = await claseService.getOneClase(userId, claseId);
+        const clase = await classService.getOneClase(classId);
         if (!clase) {
             return res.status(404).json({ status: "Error", message: "Clase not found" });
         }
@@ -32,7 +31,71 @@ const getOneClase = async (req, res) => {
     }
 };
 
-const createNewClase= async (req, res) => {
+const addFlow = async (req, res) => {
+    const { classId, flowId } = req.params;
+
+    try {
+        const respuesta = await classService.addFlow(classId, flowId);
+        res.status(201).json({status: "Ok", data: respuesta});
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+const getOneClaseByProfessor = async (req, res) => {
+    const userId = req.user._id;
+    const { params: { classId } } = req;
+
+    if (!classId) {
+        return res.status(400).json({ status: "Error", message: "Clase ID is required" });
+    }
+
+    try {
+        const clase = await classService.getOneClaseByProfessor(userId, classId);
+        if (!clase) {
+            return res.status(404).json({ status: "Error", message: "Clase not found" });
+        }
+        res.status(200).json({ status: "Ok", data: clase });
+    } catch (error) {
+        console.error("Error getting clase:", error);
+        res.status(500).json({ status: "Error", message: "Failed to get clase" });
+    }
+};
+
+const getFlowsByClase = async (req, res) => {
+    const userId = req.user._id;
+    const { params: { classId } } = req;
+
+    if (!classId) {
+        return res.status(400).json({ status: "Error", message: "Clase ID is required" });
+    }
+
+    try {
+        const flows = await classService.getFlowsByClase(userId, classId);
+        if (!flows) {
+            return res.status(404).json({ status: "Error", message: "Clase not found or no flows available" });
+        }
+        res.status(200).json({ status: "Ok", data: flows });
+    } catch (error) {
+        console.error("Error getting flows:", error);
+        res.status(500).json({ status: "Error", message: "Failed to get flows" });
+    }
+};
+
+const getStudentsByClassId = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const students = await classService.getStudentsByClassId(classId);
+        res.status(200).json({status: "Ok", data: students});
+    } catch (error) {
+        console.error('Error fetching students by class ID:', error);
+        res.status(500).json({ error: 'Failed to fetch students by class ID' });
+    }
+};
+
+
+
+const createNewClase = async (req, res) => {
     const userId = req.user._id;
     const { body } = req;
 
@@ -40,10 +103,23 @@ const createNewClase= async (req, res) => {
         return res.status(400).send({ status: "Error", message: "Name is required" });
     }
 
-    const newClase = { name: body.name, nodes: body.nodes, userId: userId };
+    // Crear una nueva clase con el nombre y el id del profesor
+    const newClase = { 
+        name: body.name, 
+        professor: userId,
+    };
 
     try {
-        const createdClase = await claseService.createNewClase(newClase);
+        const createdClase = await classService.createNewClase(newClase);
+        
+        // Obtener el ID de la clase creada
+        const createdClaseId = createdClase._id;
+
+        // Actualizar el usuario para agregar la clase creada a createdClasses
+        const updatedUser = await userService.updateUser(userId, {
+            $push: { createdClasses: createdClaseId }
+        });
+
         res.status(201).send({ status: "OK", data: createdClase });
     } catch (error) {
         console.error("Error creating new clase:", error);
@@ -60,7 +136,7 @@ const updateClase = async (req, res) => {
     }
 
     try {
-        const updatedClase = await claseService.updateClase(userId, claseId, body);
+        const updatedClase = await classService.updateClase(userId, claseId, body);
         if (!updatedClase) {
             return res.status(404).json({ status: "Error", message: "Clase not found" });
         }
@@ -72,30 +148,60 @@ const updateClase = async (req, res) => {
 };
 
 const deleteClase = async (req, res) => {
-    const userId = req.user._id; // Obtener el userId del usuario autenticado
-    const { claseId } = req.params;
+    const userId = req.user._id;  // Asegúrate de que estás obteniendo el userId correctamente
+    const { classId } = req.params;
+
+    console.log(`Attempting to delete clase with ID: ${classId} by user: ${userId}`);
 
     try {
-        if (!claseId) {
-            return res.status(400).json({ status: "Error", message: "ClaseID is required" });
-        }
-
-        const deletedClase= await claseService.deleteClase(userId, claseId);
-        if (!deletedClase) {
-            return res.status(404).json({ status: "Error", message: "Clase not found" });
-        }
-
-        res.status(204).json({ status: "OK" });
+        const deletedClase = await classService.deleteClase(userId, classId);
+        res.status(200).send({ status: "OK", data: deletedClase });
     } catch (error) {
         console.error("Error deleting clase:", error);
-        res.status(500).json({ status: "Error", message: "Failed to delete clase" });
+        res.status(500).send({ status: "Error", message: error.message });
+    }
+};
+
+const ejectStudentFromClass = async (req, res) => {
+    try {
+      const { classId, userId } = req.params;
+      console.log(classId)
+      console.log("aqui")
+      console.log(userId)
+      await classService.ejectStudentFromClass(classId, userId);
+      res.status(200).json({ message: 'Student ejected successfully' });
+    } catch (error) {
+      console.error('Error ejecting student:', error);
+      res.status(500).json({ message: 'Failed to eject student', error });
+    }
+  };
+
+
+const joinClass = async (req, res) => {
+    const userId = req.user._id;  
+    const { classId } = req.params; 
+
+    console.log(`User ${userId} attempting to join class with ID: ${classId}`);
+
+    try {
+        const clase = await classService.joinClass(userId, classId);
+        res.status(200).send({ status: "OK", data: clase });
+    } catch (error) {
+        console.error("Error joining class:", error);
+        res.status(500).send({ status: "Error", message: error.message });
     }
 };
 
 module.exports = {
     getAllClases,
     getOneClase,
+    getStudentsByClassId,
+    addFlow,
+    getOneClaseByProfessor,
+    getFlowsByClase,
     createNewClase,
     updateClase,
-    deleteClase
+    deleteClase,
+    ejectStudentFromClass,
+    joinClass
 }

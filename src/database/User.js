@@ -60,12 +60,25 @@ const deleteUser = (userId) => {
 
     DB.users.splice(indexForDelete, 1);
     saveToDatabase(DB);
-}
+};
+
+const getUserRole = (userId) => {
+    const user = DB.users.find((user) => user.id === userId);
+
+    if (!user) {
+        return;
+    }
+
+    return user.role;
+};
+
+
 
 module.exports = {
 getAllUsers,
 getOneUser,
 createNewUser,
 updateUser,
-deleteUser
+deleteUser,
+getUserRole
 };

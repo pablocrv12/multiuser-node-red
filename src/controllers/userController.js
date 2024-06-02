@@ -29,6 +29,20 @@ const getOneUser = async (req, res) => {
     }
 };
 
+const getJoinedClasses = async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        const joinedClasses = await userService.getJoinedClasses(userId);
+        res.status(200).json({ status: 'OK', data: joinedClasses });
+    } catch (error) {
+        console.error('Error retrieving joined classes:', error);
+        res.status(500).json({ status: 'Error', message: 'Server error' });
+    }
+};
+
+
+
 const createNewUser = async (req, res) => {
     const { body } = req;
 
@@ -81,10 +95,36 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// Obtener el rol de un usuario
+const getUserRole = async (req, res) => {
+    try {
+        const { userId } = req.params;
+  
+
+        if (!userId) {
+            return res.status(400).json({ status: "Error", message: "User ID is required" });
+        }
+
+        const userRole = await userService.getUserRole(userId);
+
+        if (!userRole) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+
+        res.status(200).json({ status: "Ok", data: userRole });
+    } catch (error) {
+        console.error("Error getting user role:", error);
+        res.status(500).json({ status: "Error", message: "Failed to get user role" });
+    }
+};
+
+
 module.exports = {
     getAllUsers,
     getOneUser,
+    getJoinedClasses,
     createNewUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getUserRole
 }
