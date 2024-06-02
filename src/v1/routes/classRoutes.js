@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const classController = require("../../controllers/classController");
 const passport = require('passport');
+const sendMail = require("../../services/sendMail")
 
 router
   .get('/', passport.authenticate('jwt', { session: false }), classController.getAllClases)
@@ -12,15 +13,17 @@ router
   .get("/:classId/flows", passport.authenticate('jwt', { session: false }), classController.getFlowsByClase)
   .post("/", passport.authenticate('jwt', { session: false }), classController.createNewClase)
   .patch("/:classId", passport.authenticate('jwt', { session: false }), classController.updateClase)
+  .patch("/:classId/eject/:userId", passport.authenticate('jwt', { session: false }), classController.ejectStudentFromClass)
+  .patch("/:classId/leave/:userId", passport.authenticate('jwt', { session: false }), classController.leaveClass)
+  .patch("/:classId/deleteFlow/:flowId", passport.authenticate('jwt', { session: false }), classController.deleteFlowFromClass)
   .delete("/:classId", passport.authenticate('jwt', { session: false }), classController.deleteClase)
-  .delete(":classId/eject/:userId", passport.authenticate('jwt', { session: false }), classController.ejectStudentFromClass)
   .post('/join/:classId', passport.authenticate('jwt', { session: false }),classController.joinClass)
   .post('/send-invite', async (req, res) => {
     const { recipientEmails, className, classId } = req.body;
-    const inviteLink = `http://localhost:3000/class/${classId}`;
-    
+    const inviteLink = `http://localhost:5173/join/${classId}`;
+
     try {
-        await Promise.all(recipientEmails.map(email => emailService.sendInviteEmail(email, className, inviteLink)));
+        await Promise.all(recipientEmails.map(email => sendMail.sendInviteEmail(email, className, inviteLink)));
         res.status(200).send({ message: 'Invitations sent successfully' });
     } catch (error) {
         res.status(500).send({ message: 'Error sending invitations', error });

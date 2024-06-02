@@ -106,22 +106,35 @@ const deleteClase = async (userId, claseId) => {
     }
 };
 
+
 const ejectStudentFromClass = async (classId, userId) => {
-    try {
-      // Eliminar al estudiante de la lista de estudiantes de la clase
-      await Class.findByIdAndUpdate(classId, {
-        $pull: { students: userId }
-      });
-  
-      // Eliminar la clase de la lista de clases unidas del estudiante
-      await User.findByIdAndUpdate({_id: userId}, {
-        $pull: { joinedClasses: classId }
-      });
-    } catch (error) {
-      console.error('Error ejecting student from class:', error);
-      throw new Error('Failed to eject student from class');
-    }
-  };
+    // Eliminar al estudiante de la lista de students de la clase
+    await Clase.findByIdAndUpdate(classId, { $pull: { students: userId } });
+
+    // Eliminar la clase de la lista de joinedClasses del estudiante
+    await User.findByIdAndUpdate(userId, { $pull: { joinedClasses: classId } });
+};
+
+const leaveClass = async (classId, userId) => {
+    // Eliminar al estudiante de la lista de students de la clase
+    await Clase.findByIdAndUpdate(classId, { $pull: { students: userId } });
+
+    // Eliminar la clase de la lista de joinedClasses del estudiante
+    await User.findByIdAndUpdate(userId, { $pull: { joinedClasses: classId } });
+};
+
+
+const deleteFlowFromClass = async (classId, flowId) => {
+    // Eliminar el flujo de la lista de flujos de la clase
+    console.log(classId)
+    console.log(flowId)
+    await Clase.findByIdAndUpdate(classId, { $pull: { flows: flowId } });
+
+    return {
+        success: true,
+        data: `Flow ${flowId} removed from class ${classId}`
+    };
+};
 
 const joinClass = async (userId, classId) => {
     try {
@@ -161,5 +174,7 @@ module.exports = {
     updateClase,
     deleteClase,
     ejectStudentFromClass,
+    deleteFlowFromClass,
+    leaveClass,
     joinClass
 }

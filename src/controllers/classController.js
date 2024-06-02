@@ -163,18 +163,37 @@ const deleteClase = async (req, res) => {
 };
 
 const ejectStudentFromClass = async (req, res) => {
+    const { classId, userId } = req.params;
     try {
-      const { classId, userId } = req.params;
-      console.log(classId)
-      console.log("aqui")
-      console.log(userId)
-      await classService.ejectStudentFromClass(classId, userId);
-      res.status(200).json({ message: 'Student ejected successfully' });
+        await classService.ejectStudentFromClass(classId, userId);
+        res.status(200).json({ message: "Student ejected from class successfully" });
     } catch (error) {
-      console.error('Error ejecting student:', error);
-      res.status(500).json({ message: 'Failed to eject student', error });
+        res.status(500).json({ message: "Error ejecting student from class", error });
     }
-  };
+};
+
+const leaveClass = async (req, res) => {
+    const { classId, userId } = req.params;
+    try {
+        await classService.ejectStudentFromClass(classId, userId);
+        res.status(200).json({ message: "Student has leave class successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error student leaving class", error });
+    }
+};
+
+const deleteFlowFromClass = async (req, res) => {
+    const { classId, flowId } = req.params;
+    console.log("aquji  ")
+    console.log(classId)
+    console.log(flowId)
+    try {
+        const result = await classService.deleteFlowFromClass(classId, flowId);
+        res.status(200).json({ message: "Student ejected from class successfully" });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
 
 
 const joinClass = async (req, res) => {
@@ -203,5 +222,7 @@ module.exports = {
     updateClase,
     deleteClase,
     ejectStudentFromClass,
+    deleteFlowFromClass,
+    leaveClass,
     joinClass
 }
