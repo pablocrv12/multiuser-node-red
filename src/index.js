@@ -11,10 +11,14 @@ const UserModel = require('./models/User');
 const { hashSync, compareSync } = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { exec } = require('child_process');
-const nodemailer = require('nodemailer');
+require('dotenv').config();
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+let portCounter = 1880; // Puerto inicial
+const userPortMap = {}; // Mapeo de userId a puertos
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -97,12 +101,22 @@ app.get('/protected', passport.authenticate('jwt', { session: false }), (req, re
     });
 });
 
-// Iniciar Node-RED
+// Iniciar Node-REd
+
+const assignPortToUser = (userId) => {
+    if (!userPortMap[userId]) {
+        userPortMap[userId] = portCounter++;
+    }
+    return userPortMap[userId];
+};
+
+// Endpoint para iniciar Node-RED
 app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (req, res) => {
     const userId = req.user._id;
     const token = req.headers.authorization.split(' ')[1]; // Obtener el token sin "Bearer"
+    const userPort = assignPortToUser(userId); // Asignar un puerto único a cada usuario
 
-    const command = `docker run -d -e JWT_TOKEN="${token}" --name nodered-${userId} -p 1880:1880 node-red-modified:latest`;
+    const command = `docker run -d -e JWT_TOKEN="${token}" --name nodered-${userId} -p ${userPort}:1880 node-red-modified:latest`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -117,37 +131,34 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (re
         return res.status(200).send({
             success: true,
             message: 'Node-RED container started successfully',
-            containerId: stdout.trim()
+            containerId: stdout.trim(),
+            port: userPort
         });
     });
 });
 
+// Endpoint para detener Node-RED
+app.post('/stop-nodered', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const userId = req.user._id;
 
-// Configurar el transporte de Nodemailer
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: "multiusernodered@gmail.com", // Almacenar en variables de entorno
-        pass: "multinoderedpass"  // Almacenar en variables de entorno
-    }
-});
+    const command = `docker stop nodered-${userId} && docker rm nodered-${userId}`;
 
-// Función para enviar correo de invitación
-const sendInviteEmail = (recipientEmail, className, inviteLink) => {
-    const mailOptions = {
-        from: "multiusernodered@gmail.com",
-        to: recipientEmail,
-        subject: `Invitación a la clase ${className}`,
-        text: `Has sido invitado a unirte a la clase ${className}. Usa el siguiente enlace para unirte: ${inviteLink}`
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
+    exec(command, (error, stdout, stderr) => {
         if (error) {
-            return console.log(error);
+            console.error(`Error stopping Node-RED container: ${error}`);
+            return res.status(500).send({
+                success: false,
+                message: 'Error stopping Node-RED container',
+                error: error.message
+            });
         }
-        console.log('Email sent: ' + info.response);
+
+        return res.status(200).send({
+            success: true,
+            message: 'Node-RED container stopped and removed successfully'
+        });
     });
-};
+});
 
 // Rutas adicionales
 app.use("/api/v1/flow", v1FlowRouter);

@@ -7,8 +7,8 @@ const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 300,
     auth: {
-        user: "multiusernodered@gmail.com", // Almacenar en variables de entorno
-        pass: "psruvqwmkhckztlz"  // Almacenar en variables de entorno
+        user: process.env.EMAIL_USER, // Almacenar en variables de entorno
+        pass: process.env.EMAIL_PASS  // Almacenar en variables de entorno
     }
 });
 
