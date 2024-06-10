@@ -41,6 +41,18 @@ const getJoinedClasses = async (req, res) => {
     }
 };
 
+const getCreatedClasses = async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        const createdClasses = await userService.getCreatedClasses(userId);
+        res.status(200).json({ status: 'OK', data: createdClasses });
+    } catch (error) {
+        console.error('Error retrieving created classes:', error);
+        res.status(500).json({ status: 'Error', message: 'Server error' });
+    }
+};
+
 
 
 const createNewUser = async (req, res) => {
@@ -123,6 +135,7 @@ module.exports = {
     getAllUsers,
     getOneUser,
     getJoinedClasses,
+    getCreatedClasses,
     createNewUser,
     updateUser,
     deleteUser,

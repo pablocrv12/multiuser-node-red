@@ -20,11 +20,15 @@ const UserSchema = new mongoose.Schema({
     },
     createdClasses: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Class' // Referencia al modelo de clase
+        ref: 'Class'
     }],
     joinedClasses: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Class' // Referencia al modelo de clase
+        ref: 'Class'
+    }],
+    flows: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Flow' 
     }]
 });
 

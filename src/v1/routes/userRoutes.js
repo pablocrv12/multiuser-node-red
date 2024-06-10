@@ -6,7 +6,8 @@ const passport = require('passport');
 router
   .get("/", userController.getAllUsers)
   .get("/:userId", userController.getOneUser)
-  .get("/classes/:userId", passport.authenticate('jwt', { session: false }), userController.getJoinedClasses)
+  .get("/joinedclasses/:userId", passport.authenticate('jwt', { session: false }), userController.getJoinedClasses)
+  .get("/createdclasses/:userId", passport.authenticate('jwt', { session: false }), userController.getCreatedClasses)
   .post("/", userController.createNewUser)
   .patch("/:userId", userController.updateUser)
   .delete("/:userId", userController.deleteUser)

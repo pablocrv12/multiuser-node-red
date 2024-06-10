@@ -21,10 +21,13 @@ const UserSchema = new mongoose.Schema(
         nodes:{
             type: String,
         },
-        userId:{
-            type: String, //mongoose.Schema.Types.ObjectId,
-            // ref: 'User',
-            default: "prueba",
+        classes: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Class' // Referencia al modelo de clase
+        }],
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User', // Esto es opcional si deseas referenciar al modelo User
             required: true
         }
     }

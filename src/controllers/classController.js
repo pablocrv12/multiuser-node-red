@@ -63,22 +63,25 @@ const getOneClaseByProfessor = async (req, res) => {
 };
 
 const getFlowsByClase = async (req, res) => {
-    const userId = req.user._id;
-    const { params: { classId } } = req;
-
-    if (!classId) {
-        return res.status(400).json({ status: "Error", message: "Clase ID is required" });
-    }
-
     try {
-        const flows = await classService.getFlowsByClase(userId, classId);
-        if (!flows) {
-            return res.status(404).json({ status: "Error", message: "Clase not found or no flows available" });
-        }
-        res.status(200).json({ status: "Ok", data: flows });
+        const { classId } = req.params;
+        const flows = await classService.getFlowsByClase(classId);
+        res.status(200).json({status: "Ok", data: flows});
     } catch (error) {
-        console.error("Error getting flows:", error);
-        res.status(500).json({ status: "Error", message: "Failed to get flows" });
+        console.error('Error fetching flows by class ID:', error);
+        res.status(500).json({ error: 'Failed to fetch flows by class ID' });
+    }
+};
+
+const getFlowsByClaseandStudent = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { classId } = req.params;
+        const flows = await classService.getFlowsByClaseandStudent(classId, userId);
+        res.status(200).json({status: "Ok", data: flows});
+    } catch (error) {
+        console.error('Error fetching flows by class ID:', error);
+        res.status(500).json({ error: 'Failed to fetch flows by class ID' });
     }
 };
 
@@ -129,14 +132,14 @@ const createNewClase = async (req, res) => {
 
 const updateClase = async (req, res) => {
     const userId = req.user._id;
-    const { body, params: { claseId } } = req;
+    const { body, params: { classId } } = req;
 
-    if (!claseId) {
+    if (!classId) {
         return res.status(400).json({ status: "Error", message: "Clase ID is required" });
     }
 
     try {
-        const updatedClase = await classService.updateClase(userId, claseId, body);
+        const updatedClase = await classService.updateClase(userId, classId, body);
         if (!updatedClase) {
             return res.status(404).json({ status: "Error", message: "Clase not found" });
         }
@@ -175,12 +178,23 @@ const ejectStudentFromClass = async (req, res) => {
 const leaveClass = async (req, res) => {
     const { classId, userId } = req.params;
     try {
-        await classService.ejectStudentFromClass(classId, userId);
+        await classService.leaveClass(classId, userId);
         res.status(200).json({ message: "Student has leave class successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error student leaving class", error });
     }
 };
+
+const uploadFlow = async (req, res) => {
+    const { classId, flowId } = req.params;
+    try {
+        await classService.uploadFlow(classId, flowId);
+        res.status(200).json({ message: "Flow uploaded successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error uploading flow", error });
+    }
+};
+
 
 const deleteFlowFromClass = async (req, res) => {
     const { classId, flowId } = req.params;
@@ -218,7 +232,9 @@ module.exports = {
     addFlow,
     getOneClaseByProfessor,
     getFlowsByClase,
+    getFlowsByClaseandStudent,
     createNewClase,
+    uploadFlow,
     updateClase,
     deleteClase,
     ejectStudentFromClass,

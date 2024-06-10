@@ -22,6 +22,18 @@ const getJoinedClasses = async (userId) => {
     }
 };
 
+const getCreatedClasses = async (userId) => {
+    try {
+        const user = await User.findById(userId).populate('createdClasses');
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return user.createdClasses;
+    } catch (error) {
+        throw new Error('Failed to retrieve created classes');
+    }
+};
+
 
 // Crear un nuevo usuario
 const createNewUser = async (newUser) => {
@@ -65,6 +77,7 @@ module.exports = {
     getAllUsers,
     getOneUser,
     getJoinedClasses,
+    getCreatedClasses,
     createNewUser,
     updateUser,
     deleteUser,
