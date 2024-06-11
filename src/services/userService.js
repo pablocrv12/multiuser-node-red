@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { hashSync, compareSync } = require('bcrypt');
 
 // Get todos los usuarios
 const getAllUsers = async () => {
@@ -48,11 +49,16 @@ const createNewUser = async (newUser) => {
 // Actualizar el usuario el cuál se pasa el Id por parámetro
 const updateUser = async (userId, changes) => {
     try {
-        return await User.findByIdAndUpdate(userId, changes, { new: true });
+      // Hashea la nueva contraseña si se proporciona
+      if (changes.password) {
+        changes.password = bcrypt.hashSync(changes.password, 10);
+      }
+  
+      return await User.findByIdAndUpdate( {_id: userId}, changes, { new: true });
     } catch (error) {
-        throw new Error("Failed to update user in the database");
+      throw new Error("Failed to update user in the database");
     }
-};
+  };
 
 
 // eliminar un usuario

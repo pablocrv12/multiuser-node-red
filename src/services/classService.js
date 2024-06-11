@@ -1,6 +1,7 @@
 const Clase = require("../models/Class");
 const User = require('../models/User');
 const Flow = require('../models/Flow');
+const mongoose = require('mongoose');
 
 const getAllClases = async (userId) => {
     return await Clase.find({ professor: userId });
@@ -33,10 +34,12 @@ const getFlowsByClaseandStudent = async (classId, userId) => {
         console.log(classId);
 
         // Convertir classId a ObjectId
-        const classObjectId = mongoose.Types.ObjectId(classId);
-
+        const classObjectId = new mongoose.Types.ObjectId(classId);
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+console.log(classObjectId);
+console.log(userObjectId);
         // Obtener los flujos del usuario que pertenecen a esta clase
-        const flows = await Flow.find({ userId: userId, classes: classObjectId });
+        const flows = await Flow.find({ userId: userObjectId, classes: classObjectId });
         return flows;
     } catch (error) {
         throw error;
