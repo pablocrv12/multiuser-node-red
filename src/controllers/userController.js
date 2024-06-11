@@ -75,19 +75,19 @@ const createNewUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-        const { body, params: { userId } } = req;
-
-        if (!userId) {
-            return res.status(400).json({ status: "Error", message: "User ID is required" });
-        }
-
-        const updatedUser = await userService.updateUser(userId, body);
-        res.status(200).json({ status: "OK", data: updatedUser });
+      const { body, params: { userId } } = req;
+  
+      if (!userId) {
+        return res.status(400).json({ status: "Error", message: "User ID is required" });
+      }
+  
+      const updatedUser = await userService.updateUser(userId, body);
+      res.status(200).json({ status: "OK", data: updatedUser });
     } catch (error) {
-        console.error("Error updating user:", error);
-        res.status(500).json({ status: "Error", message: "Failed to update user" });
+      console.error("Error updating user:", error);
+      res.status(500).json({ status: "Error", message: "Failed to update user" });
     }
-};
+  };
 
 const deleteUser = async (req, res) => {
     try {
