@@ -53,11 +53,23 @@ const getCreatedClasses = async (req, res) => {
     }
 };
 
+const getFlowsByUser = async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        const flows = await userService.getFlowsByUser(userId);
+        res.status(200).json({ status: 'OK', data: flows });
+    } catch (error) {
+        console.error('Error retrieving flows:', error);
+        res.status(500).json({ status: 'Error', message: 'Server error' });
+    }
+};
+
 
 
 const createNewUser = async (req, res) => {
     const { body } = req;
-
+    
     if (!body.name) {
         return res.status(400).send({ status: "Error", message: "Name is required" });
     }
@@ -136,6 +148,7 @@ module.exports = {
     getOneUser,
     getJoinedClasses,
     getCreatedClasses,
+    getFlowsByUser,
     createNewUser,
     updateUser,
     deleteUser,

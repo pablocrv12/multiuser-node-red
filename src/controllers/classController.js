@@ -64,8 +64,11 @@ const getOneClaseByProfessor = async (req, res) => {
 
 const getFlowsByClase = async (req, res) => {
     try {
+        const userId = req.user._id;
+        const data = await userService.getUserRole(userId);
+        role = data.role
         const { classId } = req.params;
-        const flows = await classService.getFlowsByClase(classId);
+        const flows = await classService.getFlowsByClase(classId, role);
         res.status(200).json({status: "Ok", data: flows});
     } catch (error) {
         console.error('Error fetching flows by class ID:', error);

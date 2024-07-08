@@ -35,6 +35,18 @@ const getCreatedClasses = async (userId) => {
     }
 };
 
+const getFlowsByUser = async (userId) => {
+    try {
+        const user = await User.findById(userId).populate('flows');
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return user.flows;
+    } catch (error) {
+        throw new Error('Failed to retrieve flows');
+    }
+};
+
 
 // Crear un nuevo usuario
 const createNewUser = async (newUser) => {
@@ -84,6 +96,7 @@ module.exports = {
     getOneUser,
     getJoinedClasses,
     getCreatedClasses,
+    getFlowsByUser,
     createNewUser,
     updateUser,
     deleteUser,

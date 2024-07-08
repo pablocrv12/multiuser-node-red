@@ -15,13 +15,21 @@ const getOneClaseByProfessor = async (userId, claseId) => {
     return await Clase.findOne({ _id: claseId, professor: userId });
 };
 
-const getFlowsByClase = async (classId) => {
+const getFlowsByClase = async (classId, role) => {
     try {
-        const classDetails = await Clase.findById(classId).populate('flows', 'name');
+        const classDetails = await Clase.findById({_id: classId}).populate('flows');
         if (!classDetails) {
             throw new Error('Class not found');
         }
-        return classDetails.flows;
+
+        if (role === 'professor') {
+            return classDetails.flows;
+        } else if (role === 'student') {
+            // Filtramos los flujos donde el userId del flujo sea igual al professor de la clase
+            return classDetails.flows.filter(flow => flow.userId.toString() === classDetails.professor.toString());
+        } else {
+            throw new Error('Role not recognized');
+        }
     } catch (error) {
         console.error('Error in getFlowsByClase service:', error);
         throw error;
@@ -30,8 +38,6 @@ const getFlowsByClase = async (classId) => {
 
 const getFlowsByClaseandStudent = async (classId, userId) => {
     try {
-        console.log(userId);
-        console.log(classId);
 
         // Convertir classId a ObjectId
         const classObjectId = new mongoose.Types.ObjectId(classId);

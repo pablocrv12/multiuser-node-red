@@ -8,6 +8,7 @@ router
   .get("/:userId", userController.getOneUser)
   .get("/joinedclasses/:userId", passport.authenticate('jwt', { session: false }), userController.getJoinedClasses)
   .get("/createdclasses/:userId", passport.authenticate('jwt', { session: false }), userController.getCreatedClasses)
+  .get("/flows/:userId", passport.authenticate('jwt', { session: false }), userController.getFlowsByUser)
   .post("/", userController.createNewUser)
   .patch("/:userId", userController.updateUser)
   .delete("/:userId", userController.deleteUser)

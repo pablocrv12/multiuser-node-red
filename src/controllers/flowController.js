@@ -1,4 +1,5 @@
 const flowService = require("../services/flowService");
+const User = require("../models/User");
 
 const getAllFlows = async (req, res) => {
     const userId = req.user._id; // Obtener el userId del usuario autenticado
@@ -13,7 +14,6 @@ const getAllFlows = async (req, res) => {
 };
 
 const getOneFlow = async (req, res) => {
-    const userId = req.user._id;
     const { params: { flowId } } = req;
 
     if (!flowId) {
@@ -21,7 +21,7 @@ const getOneFlow = async (req, res) => {
     }
 
     try {
-        const flow = await flowService.getOneFlow(userId, flowId);
+        const flow = await flowService.getOneFlow(flowId);
         if (!flow) {
             return res.status(404).json({ status: "Error", message: "Flow not found" });
         }
@@ -66,6 +66,8 @@ const getUserByFlow = async (req, res) => {
 const createNewFlow = async (req, res) => {
     const userId = req.user._id;
     const { body } = req;
+    console.log(userId)
+    console.log(body)
 
     if (!body.name) {
         return res.status(400).send({ status: "Error", message: "Name is required" });
@@ -78,7 +80,7 @@ const createNewFlow = async (req, res) => {
         const createdFlow = await flowService.createNewFlow(newFlow);
 
         // Actualizar la lista de flujos del usuario
-        await User.findByIdAndUpdate(userId, { $push: { flows: createdFlow._id } });
+        await User.findByIdAndUpdate({_id: userId}, { $push: { flows: createdFlow._id } });
 
         res.status(201).send({ status: "OK", data: createdFlow });
     } catch (error) {

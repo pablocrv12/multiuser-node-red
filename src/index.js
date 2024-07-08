@@ -128,12 +128,15 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (re
             });
         }
 
-        return res.status(200).send({
-            success: true,
-            message: 'Node-RED container started successfully',
-            containerId: stdout.trim(),
-            port: userPort
-        });
+        // Esperar 10 segundos antes de responder
+        setTimeout(() => {
+            return res.status(200).send({
+                success: true,
+                message: 'Node-RED container started successfully',
+                containerId: stdout.trim(),
+                port: userPort
+            });
+        }, 10000); // 10 segundos
     });
 });
 

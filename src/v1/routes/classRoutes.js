@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const classController = require("../../controllers/classController");
 const passport = require('passport');
-const sendMail = require("../../services/sendMail")
+
 
 router
   .get('/', passport.authenticate('jwt', { session: false }), classController.getAllClases)
@@ -21,7 +21,7 @@ router
   .post('/join/:classId', passport.authenticate('jwt', { session: false }),classController.joinClass)
   .post('/send-invite', async (req, res) => {
     const { recipientEmails, className, classId } = req.body;
-    const inviteLink = `http://localhost:5173/join/${classId}`;
+    const inviteLink = `http://localhost:3000/api/v1/class/join/${classId}`;
 
     try {
         await Promise.all(recipientEmails.map(email => sendMail.sendInviteEmail(email, className, inviteLink)));

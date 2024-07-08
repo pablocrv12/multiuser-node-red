@@ -6,8 +6,8 @@ const getAllFlows = async (userId) => {
     return await Flow.find({ userId });
 };
 
-const getOneFlow = async (userId, flowId) => {
-    return await Flow.findOne({ _id: flowId, userId });
+const getOneFlow = async (flowId) => {
+    return await Flow.findOne({ _id: flowId });
 };
 
 const getClassesByFlow = async (flowId) => {
@@ -48,26 +48,12 @@ const getUserByFlow = async (flowId) => {
     }
 };
 
-const createNewFlow = async (req, res) => {
-    const userId = req.user._id; // Obtener el userId del usuario autenticado
-    const { body } = req;
-
-    if (!body.name) {
-        return res.status(400).send({ status: "Error", message: "Name is required" });
-    }
-
-    const newFlow = { name: body.name, nodes: body.nodes, userId: userId };
-
+const createNewFlow = async (newFlow) => {
     try {
-        const createdFlow = await flowService.createNewFlow(newFlow);
-
-        // Actualizar la lista de flujos del usuario
-        await User.findByIdAndUpdate(userId, { $push: { flows: createdFlow._id } });
-
-        res.status(201).send({ status: "OK", data: createdFlow });
+        const createdFlow = await Flow.create(newFlow);
+        return createdFlow;
     } catch (error) {
-        console.error("Error creating new flow:", error);
-        res.status(500).send({ status: "Error", message: "Failed to create new flow" });
+        throw error;
     }
 };
 
