@@ -4,7 +4,7 @@ FROM node:latest
 # Instala git
 RUN apt-get update && apt-get install -y git && apt-get clean
 
-RUN git clone https://github.com/pablocrv12/multiuser-node-red
+RUN git clone --branch Production https://github.com/pablocrv12/multiuser-node-red
 
 WORKDIR /multiuser-node-red
 
