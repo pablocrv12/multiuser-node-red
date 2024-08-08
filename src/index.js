@@ -12,7 +12,8 @@ const { hashSync, compareSync } = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { exec } = require('child_process');
 require('dotenv').config();
-
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,34 +111,40 @@ const assignPortToUser = (userId) => {
     return userPortMap[userId];
 };
 
-// Endpoint para iniciar Node-RED
-app.post('/start-nodered', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post('/start-nodered', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const userId = req.user._id;
-    const token = req.headers.authorization.split(' ')[1]; // Obtener el token sin "Bearer"
-    const userPort = assignPortToUser(userId); // Asignar un puerto único a cada usuario
+    const token = req.headers.authorization.split(' ')[1];
 
-    const command = `docker run -d -e JWT_TOKEN="${token}" --name nodered-${userId} -p ${userPort}:1880 node-red-modified:latest`;
+    // Define the service name and other parameters
+    const serviceName = `nodered-${userId}`;
+    const imageName = 'gcr.io/multiuser-node-red/node-red-image';
+    const region = 'europe-west1';
+    try {
+        // Deploy the service
+        const deployCommand = `gcloud run deploy ${serviceName} --image ${imageName} --platform managed --region ${region} --allow-unauthenticated --set-env-vars JWT_TOKEN=${token}`;
+        console.log(deployCommand)
+        await execPromise(deployCommand);
+        console.log(deployCommand)
+        // Wait for the deployment to be ready
+        await new Promise(resolve => setTimeout(resolve, 35000)); // Increase if needed
 
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error launching Node-RED container: ${error}`);
-            return res.status(500).send({
-                success: false,
-                message: 'Error launching Node-RED container',
-                error: error.message
-            });
-        }
-
-        // Esperar 10 segundos antes de responder
-        setTimeout(() => {
-            return res.status(200).send({
-                success: true,
-                message: 'Node-RED container started successfully',
-                containerId: stdout.trim(),
-                port: userPort
-            });
-        }, 10000); // 10 segundos
-    });
+        // Get the URL of the deployed service
+        const describeCommand = `gcloud run services describe ${serviceName} --platform managed --region ${region} --format="value(status.url)"`;
+        const { stdout: url } = await execPromise(describeCommand);
+        console.log(url.trim())
+        return res.status(200).send({
+            success: true,
+            message: 'Node-RED container started successfully',
+            url: url.trim()
+        });
+    } catch (error) {
+        console.error(`Error launching Node-RED container: ${error}`);
+        return res.status(500).send({
+            success: false,
+            message: 'Error launching Node-RED container',
+            error: error.message
+        });
+    }
 });
 
 // Endpoint para detener Node-RED
