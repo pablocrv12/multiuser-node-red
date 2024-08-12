@@ -1,14 +1,19 @@
 # Usa una imagen base de Node.js
 FROM node:latest
 
-# Instala git
-RUN apt-get update && apt-get install -y git && apt-get clean
 
-RUN git clone --branch Production https://github.com/pablocrv12/multiuser-node-red
+# Instala git
+# RUN apt-get update && apt-get install -y git && apt-get clean
+
+# RUN git clone --branch Production https://github.com/pablocrv12/multiuser-node-red
 
 WORKDIR /multiuser-node-red
 
+COPY package*.json ./
+	
 RUN npm install
+
+COPY . .
 
 EXPOSE 3000
 
