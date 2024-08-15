@@ -111,40 +111,153 @@ const assignPortToUser = (userId) => {
     return userPortMap[userId];
 };
 
+const { google } = require('googleapis');
+
+const { GoogleAuth } = require('google-auth-library');
+
+const auth = new GoogleAuth({
+    keyFile: 'multiuser-node-red-a7bc8e2d8abd.json', // Ruta al archivo JSON de credenciales
+    scopes: 'https://www.googleapis.com/auth/cloud-platform'
+});
+
+// Ruta al archivo de la cuenta de servicio
+const keyFilePath = path.join(__dirname, 'multiuser-node-red-a7bc8e2d8abd.json');
+
+// Función para ejecutar comandos
+function execCommand(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(stdout.trim());
+            }
+        });
+    });
+}
+
+
+const run = google.run('v1');
+const iam = google.iam('v1');
 app.post('/start-nodered', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const userId = req.user._id;
-    const token = req.headers.authorization.split(' ')[1];
+  const userId = req.user._id;
+  const token = req.headers.authorization.split(' ')[1]; // Obtener el token sin "Bearer"
+  const serviceName = `node-red-service-${userId}`;
+  const imageName = 'gcr.io/multiuser-node-red/node-red-image';
+  const projectId = 'multiuser-node-red';
+  const region = 'europe-west1';
 
-    // Define the service name and other parameters
-    const serviceName = `nodered-${userId}`;
-    const imageName = 'gcr.io/multiuser-node-red/node-red-image';
-    const region = 'europe-west1';
-    try {
-        // Deploy the service
-        const deployCommand = `gcloud run deploy ${serviceName} --image ${imageName} --platform managed --region ${region} --allow-unauthenticated --set-env-vars JWT_TOKEN=${token}`;
-        console.log(deployCommand)
-        await execPromise(deployCommand);
-        console.log(deployCommand)
-        // Wait for the deployment to be ready
-        await new Promise(resolve => setTimeout(resolve, 35000)); // Increase if needed
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: path.join(__dirname, 'multiuser-node-red-a7bc8e2d8abd.json'),
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    });
 
-        // Get the URL of the deployed service
-        const describeCommand = `gcloud run services describe ${serviceName} --platform managed --region ${region} --format="value(status.url)"`;
-        const { stdout: url } = await execPromise(describeCommand);
-        console.log(url.trim())
-        return res.status(200).send({
-            success: true,
-            message: 'Node-RED container started successfully',
-            url: url.trim()
-        });
-    } catch (error) {
-        console.error(`Error launching Node-RED container: ${error}`);
-        return res.status(500).send({
-            success: false,
-            message: 'Error launching Node-RED container',
-            error: error.message
-        });
+    const authClient = await auth.getClient();
+
+    // Desplegar el servicio en Cloud Run
+    const request = {
+      parent: `projects/${projectId}/locations/${region}`,
+      requestBody: {
+        apiVersion: 'serving.knative.dev/v1',
+        kind: 'Service',
+        metadata: {
+          name: serviceName,
+          namespace: projectId,
+        },
+        spec: {
+          template: {
+            spec: {
+              containers: [
+                {
+                  image: imageName,
+                  env: [
+                    {
+                      name: 'JWT_TOKEN',
+                      value: token,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+      auth: authClient,
+    };
+
+    const response = await run.projects.locations.services.create(request);
+    console.log('Service deployed:', response.data);
+
+    // Verificar si el servicio está listo y tiene una URL asignada
+    let serviceUrl;
+    const maxRetries = 20; // Máximo número de intentos
+    const delayBetweenRetries = 5000; // 5 segundos entre intentos
+    let retries = 0;
+
+    while (!serviceUrl && retries < maxRetries) {
+      // Obtener la URL del servicio
+      const describeRequest = {
+        name: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+        auth: authClient,
+      };
+
+      const describeResponse = await run.projects.locations.services.get(describeRequest);
+      serviceUrl = describeResponse.data.status.url;
+
+      if (serviceUrl) {
+        break; // Salir del bucle si se ha asignado la URL
+      }
+
+      console.log(`Esperando a que el servicio esté listo... (Intento ${retries + 1})`);
+      retries++;
+      await new Promise(resolve => setTimeout(resolve, delayBetweenRetries)); // Esperar antes de intentar de nuevo
     }
+
+    if (!serviceUrl) {
+      throw new Error('El servicio no se ha desplegado correctamente después de varios intentos.');
+    }
+
+    // Configurar el acceso público al servicio
+    const policyRequest = {
+      resource: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+      auth: authClient,
+    };
+
+    // Añadir la política de invocación pública
+    const policyResponse = await run.projects.locations.services.getIamPolicy(policyRequest);
+    const policy = policyResponse.data;
+
+    policy.bindings = policy.bindings || [];
+    policy.bindings.push({
+      role: 'roles/run.invoker',
+      members: ['allUsers'],
+    });
+
+    const setPolicyRequest = {
+      resource: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+      requestBody: {
+        policy: policy,
+      },
+      auth: authClient,
+    };
+
+    // Actualizar la política de IAM para el servicio
+    await run.projects.locations.services.setIamPolicy(setPolicyRequest);
+
+    return res.status(200).send({
+      success: true,
+      message: 'Node-RED container started successfully',
+      url: serviceUrl,
+    });
+  } catch (error) {
+    console.error(`Error launching Node-RED container: ${error}`);
+    return res.status(500).send({
+      success: false,
+      message: 'Error launching Node-RED container',
+      error: error.message,
+    });
+  }
 });
 
 // Endpoint para detener Node-RED
