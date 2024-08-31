@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const UserSchema = new mongoose.Schema(
+const UserSchema = new Schema(
     {   
         name:{
             type: String
@@ -10,27 +10,27 @@ const UserSchema = new mongoose.Schema(
         },
         creation_date:{
             type: Date,
-            default: Date.now,//Date().toLocaleString("en-US", { timezone: "UTC"} ),
+            default: Date.now,
             required: true
         },
         last_update:{
             type: Date,
-            default: Date.now,//Date().toLocaleString("en-US", { timezone: "UTC"} ),
+            default: Date.now,
             required: true
         },
         nodes:{
             type: String,
         },
         classes: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Class' // Referencia al modelo de clase
+            type: Schema.Types.ObjectId,
+            ref: 'Class'
         }],
         userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User', // Esto es opcional si deseas referenciar al modelo User
+            type: Schema.Types.ObjectId,
+            ref: 'User', 
             required: true
         }
     }
 );
 
-module.exports = mongoose.model('Flow', UserSchema);
+export default model('Flow', UserSchema);

@@ -1,6 +1,6 @@
 const Clase = require("../models/Class");
 const User = require('../models/User');
-const Flow = require('../models/Flow');
+const Flow = require('../models/Flow').default;
 const mongoose = require('mongoose');
 
 const getAllClases = async (userId) => {

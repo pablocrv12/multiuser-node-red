@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const classController = require("../../controllers/classController");
 const passport = require('passport');
+const sendMail = require('../../services/sendMail');
+
 
 
 router
@@ -22,13 +24,15 @@ router
   .post('/send-invite', async (req, res) => {
     const { recipientEmails, className, classId } = req.body;
     const inviteLink = `https://backend-service-3flglcef2q-ew.a.run.app/api/v1/class/join/${classId}`;
-
     try {
-        await Promise.all(recipientEmails.map(email => sendMail.sendInviteEmail(email, className, inviteLink)));
+        await Promise.all(recipientEmails.map(email => {
+            return sendMail.sendInviteEmail(email, className, inviteLink);
+        }));
         res.status(200).send({ message: 'Invitations sent successfully' });
     } catch (error) {
-        res.status(500).send({ message: 'Error sending invitations', error });
+        res.status(500).send({ message: 'Error sending invitations', error: error.message });
     }
-  });
+});
+
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const userService = require("../services/userService");
+const bcrypt = require('bcrypt');
 
 const getAllUsers = async (req, res) => {
 
@@ -25,6 +26,25 @@ const getOneUser = async (req, res) => {
         res.status(200).json({ status: "Ok", data: user });
     } catch (error) {
         console.error("Error getting user:", error);
+        res.status(500).json({ status: "Error", message: "Failed to get user" });
+    }
+};
+
+const getUserByEmail = async (req, res) => {
+    const { email } = req.params;
+
+    if (!email) {
+        return res.status(400).json({ status: "Error", message: "Email is required" });
+    }
+
+    try {
+        const user = await userService.getUserByEmail(email);
+        if (!user) {
+            return res.status(404).json({ status: "Error", message: "User not found" });
+        }
+        res.status(200).json({ status: "Ok", data: user });
+    } catch (error) {
+        console.error("Error getting user by email:", error);
         res.status(500).json({ status: "Error", message: "Failed to get user" });
     }
 };
@@ -87,19 +107,46 @@ const createNewUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     try {
-      const { body, params: { userId } } = req;
-  
-      if (!userId) {
-        return res.status(400).json({ status: "Error", message: "User ID is required" });
-      }
-  
-      const updatedUser = await userService.updateUser(userId, body);
-      res.status(200).json({ status: "OK", data: updatedUser });
+        const { body, params: { userId } } = req;
+        const { currentPassword, newPassword, ...otherUpdates } = body;
+
+        if (!userId) {
+            return res.status(400).json({ status: "Error", message: "User ID is required" });
+        }
+
+        // Si solo se proporciona la nueva contraseña (sin contraseña actual)
+        if (newPassword && !currentPassword) {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            otherUpdates.password = hashedPassword;
+        } 
+        // Si se proporciona tanto la contraseña actual como la nueva
+        else if (currentPassword && newPassword) {
+            const user = await userService.getOneUser(userId);
+            if (!user) {
+                return res.status(404).json({ status: "Error", message: "User not found" });
+            }
+
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(400).json({ status: "Error", message: "Incorrect current password" });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            otherUpdates.password = hashedPassword;
+        }
+
+        // Actualizar otros campos del usuario si existen
+        const updatedUser = await userService.updateUser(userId, otherUpdates);
+
+        res.status(200).json({ status: "OK", data: updatedUser });
     } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ status: "Error", message: "Failed to update user" });
+        console.error("Error updating user:", error);
+        res.status(500).json({ status: "Error", message: "Failed to update user" });
     }
-  };
+};
+
+
+
 
 const deleteUser = async (req, res) => {
     try {
@@ -146,6 +193,7 @@ const getUserRole = async (req, res) => {
 module.exports = {
     getAllUsers,
     getOneUser,
+    getUserByEmail,
     getJoinedClasses,
     getCreatedClasses,
     getFlowsByUser,

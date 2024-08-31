@@ -1,0 +1,572 @@
+openapi: 3.0.0
+info:
+  title: API de Clases, Flows y Usuarios
+  version: 1.0.0
+  description: API para la gestión de clases, flows y usuarios en la plataforma.
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Servidor local
+
+paths:
+  /class:
+    get:
+      summary: Obtener todas las clases
+      operationId: getAllClases
+      tags:
+        - Clases
+      responses:
+        '200':
+          description: Lista de clases obtenida exitosamente
+
+    post:
+      summary: Crear una nueva clase
+      operationId: createNewClase
+      tags:
+        - Clases
+      responses:
+        '201':
+          description: Clase creada exitosamente
+
+  /class/{classId}:
+    get:
+      summary: Obtener una clase por ID
+      operationId: getOneClase
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clase obtenida exitosamente
+
+    patch:
+      summary: Actualizar una clase por ID
+      operationId: updateClase
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clase actualizada exitosamente
+
+    delete:
+      summary: Eliminar una clase por ID
+      operationId: deleteClase
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clase eliminada exitosamente
+
+  /class/students/{classId}:
+    get:
+      summary: Obtener estudiantes por ID de clase
+      operationId: getStudentsByClassId
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de estudiantes obtenida exitosamente
+
+  /class/{classId}/uploadFlow/{flowId}:
+    post:
+      summary: Añadir un flujo a una clase
+      operationId: addFlow
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flujo
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Flujo añadido a la clase exitosamente
+
+  /class/{classId}/flows:
+    get:
+      summary: Obtener flujos por ID de clase
+      operationId: getFlowsByClase
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de flujos obtenida exitosamente
+
+  /class/{classId}/flowsStudent:
+    get:
+      summary: Obtener flujos de estudiantes por ID de clase
+      operationId: getFlowsByClaseandStudent
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de flujos de estudiantes obtenida exitosamente
+
+  /class/{classId}/eject/{userId}:
+    patch:
+      summary: Expulsar un estudiante de una clase
+      operationId: ejectStudentFromClass
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          description: ID del estudiante
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estudiante expulsado exitosamente
+
+  /class/{classId}/leave/{userId}:
+    patch:
+      summary: Abandonar una clase
+      operationId: leaveClass
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario ha dejado la clase exitosamente
+
+  /class/{classId}/deleteFlow/{flowId}:
+    patch:
+      summary: Eliminar un flujo de una clase
+      operationId: deleteFlowFromClass
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flujo
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flujo eliminado de la clase exitosamente
+
+  /class/join/{classId}:
+    post:
+      summary: Unirse a una clase
+      operationId: joinClass
+      tags:
+        - Clases
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          description: ID de la clase
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario unido a la clase exitosamente
+
+  /class/send-invite:
+    post:
+      summary: Enviar invitación para unirse a una clase
+      operationId: sendInvite
+      tags:
+        - Clases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipientEmails:
+                  type: array
+                  items:
+                    type: string
+                  description: Lista de correos electrónicos de los destinatarios
+                className:
+                  type: string
+                  description: Nombre de la clase
+                classId:
+                  type: string
+                  description: ID de la clase
+      responses:
+        '200':
+          description: Invitaciones enviadas exitosamente
+        '500':
+          description: Error al enviar las invitaciones
+
+  /flow:
+    get:
+      summary: Obtener todos los flows
+      operationId: getAllFlows
+      tags:
+        - Flows
+      responses:
+        '200':
+          description: Lista de flows obtenida exitosamente
+
+    post:
+      summary: Crear un nuevo flow
+      operationId: createNewFlow
+      tags:
+        - Flows
+      responses:
+        '201':
+          description: Flow creado exitosamente
+
+  /flow/{flowId}:
+    get:
+      summary: Obtener un flow por ID
+      operationId: getOneFlow
+      tags:
+        - Flows
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flow
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flow obtenido exitosamente
+
+    patch:
+      summary: Actualizar un flow por ID
+      operationId: updateFlow
+      tags:
+        - Flows
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flow
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flow actualizado exitosamente
+
+    delete:
+      summary: Eliminar un flow por ID
+      operationId: deleteFlow
+      tags:
+        - Flows
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flow
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flow eliminado exitosamente
+
+  /flow/classes/{flowId}:
+    get:
+      summary: Obtener clases asociadas a un flow por ID de flow
+      operationId: getClassesByFlow
+      tags:
+        - Flows
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flow
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de clases obtenida exitosamente
+
+  /flow/user/{flowId}:
+    get:
+      summary: Obtener usuario asociado a un flow por ID de flow
+      operationId: getUserByFlow
+      tags:
+        - Flows
+      parameters:
+        - name: flowId
+          in: path
+          required: true
+          description: ID del flow
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario obtenido exitosamente
+
+  /user:
+    get:
+      summary: Obtener todos los usuarios
+      operationId: getAllUsers
+      tags:
+        - Usuarios
+      responses:
+        '200':
+          description: Lista de usuarios obtenida exitosamente
+
+    post:
+      summary: Crear un nuevo usuario
+      operationId: createNewUser
+      tags:
+        - Usuarios
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+
+  /user/{userId}:
+    get:
+      summary: Obtener un usuario por ID
+      operationId: getOneUser
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario obtenido exitosamente
+
+    patch:
+      summary: Actualizar un usuario por ID
+      operationId: updateUser
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario actualizado exitosamente
+
+    delete:
+      summary: Eliminar un usuario por ID
+      operationId: deleteUser
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario eliminado exitosamente
+
+  /user/userByEmail/{email}:
+    get:
+      summary: Obtener un usuario por email
+      operationId: getUserByEmail
+      tags:
+        - Usuarios
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: Email del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario obtenido exitosamente
+
+  /user/joinedclasses/{userId}:
+    get:
+      summary: Obtener clases unidas por el usuario
+      operationId: getJoinedClasses
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clases obtenidas exitosamente
+
+  /user/createdclasses/{userId}:
+    get:
+      summary: Obtener clases creadas por el usuario
+      operationId: getCreatedClasses
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clases obtenidas exitosamente
+
+  /user/flows/{userId}:
+    get:
+      summary: Obtener flows creados por el usuario
+      operationId: getFlowsByUser
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Flows obtenidos exitosamente
+
+  /user/rol/{userId}:
+    get:
+      summary: Obtener rol del usuario por ID
+      operationId: getUserRole
+      tags:
+        - Usuarios
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID del usuario
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rol del usuario obtenido exitosamente
+
+  /user/send-reset-password:
+    post:
+      summary: Enviar correo de restablecimiento de contraseña
+      operationId: sendResetPassword
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Correo electrónico del usuario
+      responses:
+        '200':
+          description: Correo de restablecimiento de contraseña enviado exitosamente
+        '500':
+          description: Error al enviar el correo de restablecimiento
+
+  /user/reset-password:
+    post:
+      summary: Restablecer la contraseña usando un token
+      operationId: resetPassword
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Token de restablecimiento
+                newPassword:
+                  type: string
+                  description: Nueva contraseña
+      responses:
+        '200':
+          description: Contraseña restablecida exitosamente
+        '400':
+          description: Token inválido o expirado
+        '500':
+          description: Error al restablecer la contraseña

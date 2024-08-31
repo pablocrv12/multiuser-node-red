@@ -1,5 +1,4 @@
 const User = require("../models/User");
-const { hashSync, compareSync } = require('bcrypt');
 
 // Get todos los usuarios
 const getAllUsers = async () => {
@@ -10,6 +9,17 @@ const getAllUsers = async () => {
 const getOneUser = async (userId) => {
     return await User.findById(userId);
 };
+
+const getUserByEmail = async (email) => {
+    try {
+        // Buscar al usuario en la base de datos por su correo electrónico
+        return await User.findOne({ email }).exec();
+    } catch (error) {
+        console.error("Error fetching user by email:", error);
+        throw new Error('Error fetching user by email');
+    }
+};
+
 
 const getJoinedClasses = async (userId) => {
     try {
@@ -61,16 +71,12 @@ const createNewUser = async (newUser) => {
 // Actualizar el usuario el cuál se pasa el Id por parámetro
 const updateUser = async (userId, changes) => {
     try {
-      // Hashea la nueva contraseña si se proporciona
-      if (changes.password) {
-        changes.password = bcrypt.hashSync(changes.password, 10);
-      }
-  
-      return await User.findByIdAndUpdate( {_id: userId}, changes, { new: true });
+        return await User.findByIdAndUpdate({_id: userId}, changes, { new: true });
     } catch (error) {
-      throw new Error("Failed to update user in the database");
+        throw new Error("Failed to update user in the database");
     }
-  };
+};
+
 
 
 // eliminar un usuario
@@ -94,6 +100,7 @@ const getUserRole = async (userId) => {
 module.exports = {
     getAllUsers,
     getOneUser,
+    getUserByEmail,
     getJoinedClasses,
     getCreatedClasses,
     getFlowsByUser,

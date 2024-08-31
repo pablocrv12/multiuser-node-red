@@ -6,7 +6,7 @@ const v1ClassRouter = require("./v1/routes/classRoutes");
 const v1UserRouter = require("./v1/routes/userRoutes");
 const v1noderedRouter = require("./v1/routes/noderedRoutes");
 const initDb = require("./config/db");
-const path = require('path');
+const path = require('path'); 
 const UserModel = require('./models/User');
 const { hashSync, compareSync } = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -15,14 +15,15 @@ require('dotenv').config();
 const util = require('util');
 const execPromise = util.promisify(exec);
 
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 let portCounter = 1880; // Puerto inicial
 const userPortMap = {}; // Mapeo de userId a puertos
 
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
@@ -48,7 +49,7 @@ app.post('/login', (req, res) => {
         }
 
         const payload = { email: user.email, id: user._id };
-        const token = jwt.sign(payload, "Random string", { expiresIn: "60m" });
+        const token = jwt.sign(payload, "Random string", { expiresIn: "120m" });
 
         return res.status(200).send({
             success: true,
@@ -89,27 +90,6 @@ app.post('/register', (req, res) => {
     });
 });
 
-
-// Ruta protegida
-app.get('/protected', passport.authenticate('jwt', { session: false }), (req, res) => {
-    return res.status(200).send({
-        success: true,
-        user: {
-            id: req.user._id,
-            email: req.user.email,
-            role: req.user.role
-        }
-    });
-});
-
-// Iniciar Node-REd
-
-const assignPortToUser = (userId) => {
-    if (!userPortMap[userId]) {
-        userPortMap[userId] = portCounter++;
-    }
-    return userPortMap[userId];
-};
 
 const { google } = require('googleapis');
 
@@ -155,8 +135,51 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), asy
 
     const authClient = await auth.getClient();
 
-    // Desplegar el servicio en Cloud Run
-    const request = {
+    // Comprobar si el servicio ya existe
+    let serviceUrl;
+    try {
+      const describeRequest = {
+        name: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+        auth: authClient,
+      };
+      
+      const describeResponse = await run.projects.locations.services.get(describeRequest);
+      serviceUrl = describeResponse.data.status.url;
+      
+      if (serviceUrl) {
+        console.log('Service already exists:', serviceUrl);
+
+        // Actualizar la variable de entorno JWT_TOKEN
+        describeResponse.data.spec.template.spec.containers[0].env = [{
+          name: 'JWT_TOKEN',
+          value: token,
+        }];
+
+        const updateRequest = {
+          name: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+          requestBody: describeResponse.data,
+          auth: authClient,
+        };
+
+        const updateResponse = await run.projects.locations.services.replaceService(updateRequest);
+        serviceUrl = updateResponse.data.status.url;
+
+        return res.status(200).send({
+          success: true,
+          message: 'Node-RED container updated successfully',
+          url: serviceUrl,
+        });
+      }
+    } catch (error) {
+      if (error.code === 404) {
+        console.log('Service does not exist, will create a new one.');
+      } else {
+        throw error;
+      }
+    }
+
+    // Si el servicio no existe, crearlo
+    const createRequest = {
       parent: `projects/${projectId}/locations/${region}`,
       requestBody: {
         apiVersion: 'serving.knative.dev/v1',
@@ -186,17 +209,15 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), asy
       auth: authClient,
     };
 
-    const response = await run.projects.locations.services.create(request);
-    console.log('Service deployed:', response.data);
+    const createResponse = await run.projects.locations.services.create(createRequest);
+    console.log('Service deployed:', createResponse.data);
 
     // Verificar si el servicio está listo y tiene una URL asignada
-    let serviceUrl;
     const maxRetries = 20; // Máximo número de intentos
     const delayBetweenRetries = 5000; // 5 segundos entre intentos
     let retries = 0;
 
     while (!serviceUrl && retries < maxRetries) {
-      // Obtener la URL del servicio
       const describeRequest = {
         name: `projects/${projectId}/locations/${region}/services/${serviceName}`,
         auth: authClient,
@@ -224,7 +245,6 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), asy
       auth: authClient,
     };
 
-    // Añadir la política de invocación pública
     const policyResponse = await run.projects.locations.services.getIamPolicy(policyRequest);
     const policy = policyResponse.data;
 
@@ -242,7 +262,6 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), asy
       auth: authClient,
     };
 
-    // Actualizar la política de IAM para el servicio
     await run.projects.locations.services.setIamPolicy(setPolicyRequest);
 
     return res.status(200).send({
@@ -261,26 +280,47 @@ app.post('/start-nodered', passport.authenticate('jwt', { session: false }), asy
 });
 
 // Endpoint para detener Node-RED
-app.post('/stop-nodered', passport.authenticate('jwt', { session: false }), (req, res) => {
-    const userId = req.user._id;
+app.post('/stop-nodered', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  const userId = req.user._id;
+  const serviceName = `node-red-service-${userId}`;
+  const projectId = 'multiuser-node-red'; 
+  const region = 'europe-west1';
 
-    const command = `docker stop nodered-${userId} && docker rm nodered-${userId}`;
-
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error stopping Node-RED container: ${error}`);
-            return res.status(500).send({
-                success: false,
-                message: 'Error stopping Node-RED container',
-                error: error.message
-            });
-        }
-
-        return res.status(200).send({
-            success: true,
-            message: 'Node-RED container stopped and removed successfully'
-        });
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: path.join(__dirname, 'multiuser-node-red-a7bc8e2d8abd.json'),
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
     });
+
+    const authClient = await auth.getClient();
+
+    // Obtener el servicio
+    const serviceRequest = {
+      name: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+      auth: authClient,
+    };
+
+    // Eliminar el servicio
+    const deleteRequest = {
+      name: `projects/${projectId}/locations/${region}/services/${serviceName}`,
+      auth: authClient,
+    };
+
+    await run.projects.locations.services.delete(deleteRequest);
+    console.log('Service deleted:', serviceName);
+
+    return res.status(200).send({
+      success: true,
+      message: 'Node-RED service stopped and removed successfully',
+    });
+  } catch (error) {
+    console.error(`Error stopping Node-RED service: ${error}`);
+    return res.status(500).send({
+      success: false,
+      message: 'Error stopping Node-RED service',
+      error: error.message,
+    });
+  }
 });
 
 // Rutas adicionales
