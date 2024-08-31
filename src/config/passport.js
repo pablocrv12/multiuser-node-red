@@ -3,9 +3,10 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const UserModel = require('../models/User');
 const passport = require('passport');
 
+
 const opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-opts.secretOrKey = 'Random string';
+opts.secretOrKey = process.env.JWT_SECRET;
 
 passport.use(new JwtStrategy(opts, async function (jwt_payload, done) {
     try {
@@ -20,4 +21,4 @@ passport.use(new JwtStrategy(opts, async function (jwt_payload, done) {
     }
 }));
 
-module.exports = passport; // Asegúrate de exportar passport
+module.exports = passport;

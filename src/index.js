@@ -49,7 +49,7 @@ app.post('/login', (req, res) => {
         }
 
         const payload = { email: user.email, id: user._id };
-        const token = jwt.sign(payload, "Random string", { expiresIn: "120m" });
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "120m" });
 
         return res.status(200).send({
             success: true,
@@ -66,8 +66,8 @@ app.post('/register', (req, res) => {
     const user = new UserModel({
         email,
         password: hashSync(password, 10),
-        role, // Guardar el rol como cadena
-        name // Guardar el nombre
+        role,
+        name
     });
 
     user.save().then(user => {
@@ -77,8 +77,8 @@ app.post('/register', (req, res) => {
             user: {
                 id: user._id,
                 email: user.email,
-                role: user.role, // Devolver el rol del usuario
-                name: user.name // Devolver el nombre del usuario
+                role: user.role,
+                name: user.name
             }
         });
     }).catch(err => {
