@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: API de Clases, Flows y Usuarios
   version: 1.0.0
-  description: API para la gestión de clases, flows y usuarios en la plataforma.
+  description: API para la gestión de clases, flows, Node-RED y usuarios en la plataforma.
 
 servers:
   - url: http://localhost:3000/api/v1
@@ -379,14 +379,6 @@ paths:
         '200':
           description: Lista de usuarios obtenida exitosamente
 
-    post:
-      summary: Crear un nuevo usuario
-      operationId: createNewUser
-      tags:
-        - Usuarios
-      responses:
-        '201':
-          description: Usuario creado exitosamente
 
   /user/{userId}:
     get:
@@ -522,6 +514,59 @@ paths:
         '200':
           description: Rol del usuario obtenido exitosamente
 
+  /users/login:
+    post:
+      summary: Iniciar sesión
+      operationId: login
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+        '401':
+          description: Credenciales inválidas
+
+  /users/register:
+    post:
+      summary: Registrar un nuevo usuario
+      operationId: register
+      tags:
+        - Usuarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                name:
+                  type: string
+                role:
+                  type: string
+                  description: Rol del usuario (ej. admin, teacher, student)
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+        '400':
+          description: Solicitud incorrecta
+
   /user/send-reset-password:
     post:
       summary: Enviar correo de restablecimiento de contraseña
@@ -570,3 +615,15 @@ paths:
           description: Token inválido o expirado
         '500':
           description: Error al restablecer la contraseña
+
+  /nodered/start-nodered:
+    post:
+      summary: Iniciar un contenedor Node-RED
+      operationId: startNodeRed
+      tags:
+        - Node-RED
+      responses:
+        '200':
+          description: Contenedor Node-RED iniciado exitosamente
+        '500':
+          description: Error al iniciar el contenedor Node-RED

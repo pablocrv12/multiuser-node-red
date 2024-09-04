@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-
+require('dotenv').config();
 
 
 const transporter = nodemailer.createTransport({
@@ -8,8 +8,8 @@ const transporter = nodemailer.createTransport({
     port: 587,
     secure: false,
     auth: {
-        user: "multiusernodered@gmail.com", // Almacenar en variables de entorno
-        pass: "psruvqwmkhckztlz"  // Almacenar en variables de entorno
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS
     }
 });
 
@@ -17,10 +17,12 @@ const transporter = nodemailer.createTransport({
 const sendInviteEmail = (recipientEmail, className, inviteLink) => {
     return new Promise((resolve, reject) => {
         const mailOptions = {
-            from: "multiusernodered@gmail.com",
+            from: process.env.EMAIL_USER,
             to: recipientEmail,
-            subject: `Invitación a la clase ${className}`,
-            text: `Has sido invitado a unirte a la clase ${className}. Usa el siguiente enlace para unirte: ${inviteLink}`
+            subject: `Multiuser-NodeRED - Invitación a la clase ${className}`,
+            text: `Has sido invitado a unirte a la clase ${className}. Utiliza el siguiente código para unirte a la clase: ${inviteLink}
+            
+            Regístrate o inicia sesión aquí: https://frontend-service-830425129942.europe-west1.run.app`
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
@@ -39,11 +41,11 @@ const sendInviteEmail = (recipientEmail, className, inviteLink) => {
 const sendResetPasswordEmail = (recipientEmail, resetLink) => {
     return new Promise((resolve, reject) => {
         const mailOptions = {
-            from: "multiusernodered@gmail.com",
+            from: "process.env.EMAIL_USER",
             to: recipientEmail,
             subject: 'Restablecimiento de contraseña',
             text: `Has solicitado restablecer tu contraseña. Usa el siguiente enlace para establecer una nueva contraseña: ${resetLink}. 
-                   Si no solicitaste esto, puedes ignorar este correo.`
+                   El enlace caducará en una hora.`
         };
 
         transporter.sendMail(mailOptions, (error, info) => {

@@ -1,6 +1,6 @@
-import { Schema, model } from "mongoose";
+const mongoose = require("mongoose");
 
-const UserSchema = new Schema(
+const FlowSchema = new mongoose.Schema(
     {   
         name:{
             type: String
@@ -22,15 +22,15 @@ const UserSchema = new Schema(
             type: String,
         },
         classes: [{
-            type: Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
             ref: 'Class'
         }],
         userId: {
-            type: Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
             ref: 'User', 
             required: true
         }
     }
 );
 
-export default model('Flow', UserSchema);
+module.exports = mongoose.model('Flow', FlowSchema);

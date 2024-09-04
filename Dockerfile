@@ -1,24 +1,20 @@
 # Usa una imagen base de Node.js
 FROM node:latest
 
-
-# Instala git
-# RUN apt-get update && apt-get install -y git && apt-get clean
-
-# RUN git clone --branch Production https://github.com/pablocrv12/multiuser-node-red
-
+# Establece el directorio de trabajo dentro del contenedor. 
 WORKDIR /multiuser-node-red
 
+# Copia los archivos package.json y package-lock.json al directorio de trabajo en el contenedor.
 COPY package*.json ./
-	
+
+# Instala las dependencias necesarias utilizando npm.
 RUN npm install
 
+# Copia todo el código fuente de la aplicación al directorio de trabajo en el contenedor.
 COPY . .
 
+# Expone el puerto 3000 en el contenedor.
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
-
-# construir con: docker build --no-cache -t multiuser-node-red:latest .
-
-# ejecutar con: docker run -d --name multiuser-nodered -p 3000:3000 multiuser-node-red:latest
+# Se ejecuta la aplicación en modo de producción
+CMD ["npm", "run", "start"]

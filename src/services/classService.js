@@ -1,6 +1,6 @@
 const Clase = require("../models/Class");
 const User = require('../models/User');
-const Flow = require('../models/Flow').default;
+const Flow = require('../models/Flow');
 const mongoose = require('mongoose');
 
 const getAllClases = async (userId) => {
@@ -107,9 +107,9 @@ const addFlow = async (classId, flowId) => {
 
         // Guardar los cambios en la base de datos
         await clase.save();
-
         // Buscar el flow por su ID y agregar la clase a su lista de clases
         const flow = await Flow.findById(flowId);
+        
         if (!flow) {
             throw new Error('Flow no encontrado');
         }

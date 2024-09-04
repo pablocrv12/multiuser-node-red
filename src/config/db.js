@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
-
-const DB_URI = "mongodb+srv://pablocarvajalbenitez:y1O44Y1Y9endY7Kb@clustertfg.bblxsmc.mongodb.net/Multiuser-Node-RED";
+require('dotenv').config();
 
 module.exports = () => {
     const connect = async () => {
         try {
-            await mongoose.connect(DB_URI);
+            await mongoose.connect(process.env.DB_URI);
             console.log("Conexión correcta");
         } catch (err) {
             console.error("DB: Error!!", err);
