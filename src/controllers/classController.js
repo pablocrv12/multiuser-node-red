@@ -200,7 +200,6 @@ const uploadFlow = async (req, res) => {
 
 const deleteFlowFromClass = async (req, res) => {
     const { classId, flowId } = req.params;
-    console.log("awae")
     try {
         const result = await classService.deleteFlowFromClass(classId, flowId);
         res.status(200).json({ message: "Flow deleted from class successfully" });

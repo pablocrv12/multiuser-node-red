@@ -1,29 +1,71 @@
-const User = require("../models/User");
+const userDataAccess = require('../dataAccess/userDataAccess');
+const { hashSync, compareSync } = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-// Get todos los usuarios
-const getAllUsers = async () => {
-    return await User.find();
+
+const registerUser = async (email, password, role, name) => {
+    try {
+        // Hashear la contraseña
+        const hashedPassword = hashSync(password, 10);
+
+        // Crear un nuevo usuario
+        const newUser = await userDataAccess.createUser({
+            email,
+            password: hashedPassword,
+            role,
+            name
+        });
+
+        return newUser;
+    } catch (error) {
+        throw new Error('Failed to register user: ' + error.message);
+    }
 };
 
-// Get del usuario que tenga el Id pasado por parámetro
+const loginUser = async (email, password) => {
+    try {
+        // Buscar el usuario por su correo electrónico
+        const user = await userDataAccess.findOneByEmail(email);
+        if (!user) {
+            throw new Error('Could not find the user.');
+        }
+
+        // Verificar la contraseña
+        if (!compareSync(password, user.password)) {
+            throw new Error('Incorrect password');
+        }
+
+        // Generar el token JWT
+        const payload = { email: user.email, id: user._id };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "120m" });
+
+        return { user, token };
+    } catch (error) {
+        throw new Error(error.message);
+    }
+};
+
+
+const getAllUsers = async () => {
+    return await userDataAccess.findAll();
+};
+
 const getOneUser = async (userId) => {
-    return await User.findById(userId);
+    return await userDataAccess.findById(userId);
 };
 
 const getUserByEmail = async (email) => {
     try {
-        // Buscar al usuario en la base de datos por su correo electrónico
-        return await User.findOne({ email }).exec();
+        return await userDataAccess.findOneByEmail(email);
     } catch (error) {
         console.error("Error fetching user by email:", error);
         throw new Error('Error fetching user by email');
     }
 };
 
-
 const getJoinedClasses = async (userId) => {
     try {
-        const user = await User.findById(userId).populate('joinedClasses');
+        const user = await userDataAccess.findByIdWithJoinedClasses(userId);
         if (!user) {
             throw new Error('User not found');
         }
@@ -35,7 +77,7 @@ const getJoinedClasses = async (userId) => {
 
 const getCreatedClasses = async (userId) => {
     try {
-        const user = await User.findById(userId).populate('createdClasses');
+        const user = await userDataAccess.findByIdWithCreatedClasses(userId);
         if (!user) {
             throw new Error('User not found');
         }
@@ -47,7 +89,7 @@ const getCreatedClasses = async (userId) => {
 
 const getFlowsByUser = async (userId) => {
     try {
-        const user = await User.findById(userId).populate('flows');
+        const user = await userDataAccess.findByIdWithFlows(userId);
         if (!user) {
             throw new Error('User not found');
         }
@@ -57,22 +99,17 @@ const getFlowsByUser = async (userId) => {
     }
 };
 
-
-// Actualizar el usuario el cuál se pasa el Id por parámetro
 const updateUser = async (userId, changes) => {
     try {
-        return await User.findByIdAndUpdate({_id: userId}, changes, { new: true });
+        return await userDataAccess.findByIdAndUpdate(userId, changes);
     } catch (error) {
         throw new Error("Failed to update user in the database");
     }
 };
 
-
-
-// eliminar un usuario
 const deleteUser = async (userId) => {
     try {
-        const deletedUser = await User.findByIdAndDelete(userId);
+        const deletedUser = await userDataAccess.findByIdAndDelete(userId);
         if (!deletedUser) {
             throw new Error("User not found");
         }
@@ -81,13 +118,13 @@ const deleteUser = async (userId) => {
     }
 };
 
-// Obtener el rol del usuario con el ID proporcionado
 const getUserRole = async (userId) => {
-    return await User.findById(userId, 'role');
+    return await userDataAccess.findRoleById(userId);
 };
 
-
 module.exports = {
+    registerUser,
+    loginUser,
     getAllUsers,
     getOneUser,
     getUserByEmail,
@@ -97,4 +134,4 @@ module.exports = {
     updateUser,
     deleteUser,
     getUserRole
-}
+};

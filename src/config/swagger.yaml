@@ -237,36 +237,6 @@ paths:
         '200':
           description: Usuario unido a la clase exitosamente
 
-  /class/send-invite:
-    post:
-      summary: Enviar invitación para unirse a una clase
-      operationId: sendInvite
-      tags:
-        - Clases
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                recipientEmails:
-                  type: array
-                  items:
-                    type: string
-                  description: Lista de correos electrónicos de los destinatarios
-                className:
-                  type: string
-                  description: Nombre de la clase
-                classId:
-                  type: string
-                  description: ID de la clase
-      responses:
-        '200':
-          description: Invitaciones enviadas exitosamente
-        '500':
-          description: Error al enviar las invitaciones
-
   /flow:
     get:
       summary: Obtener todos los flows
@@ -567,12 +537,12 @@ paths:
         '400':
           description: Solicitud incorrecta
 
-  /user/send-reset-password:
+  /reset/send-reset-password:
     post:
       summary: Enviar correo de restablecimiento de contraseña
       operationId: sendResetPassword
       tags:
-        - Usuarios
+        - Reset Password
       requestBody:
         required: true
         content:
@@ -589,12 +559,12 @@ paths:
         '500':
           description: Error al enviar el correo de restablecimiento
 
-  /user/reset-password:
+  /reset/reset-password:
     post:
-      summary: Restablecer la contraseña usando un token
+      summary: Guardar la nueva la contraseña
       operationId: resetPassword
       tags:
-        - Usuarios
+        - Reset Password
       requestBody:
         required: true
         content:
@@ -618,7 +588,7 @@ paths:
 
   /nodered/start-nodered:
     post:
-      summary: Iniciar un contenedor Node-RED
+      summary: Iniciar una instancia de Node-RED
       operationId: startNodeRed
       tags:
         - Node-RED
@@ -630,7 +600,7 @@ paths:
 
   /nodered/stop-nodered:
     post:
-      summary: Detener un contenedor Node-RED
+      summary: Detener una instancia de Node-RED
       operationId: stopNodeRed
       tags:
         - Node-RED
@@ -639,3 +609,33 @@ paths:
           description: Contenedor Node-RED detenido exitosamente
         '500':
           description: Error al detener el contenedor Node-RED
+
+  /email/send-invite:
+    post:
+      summary: Enviar invitación para unirse a una clase
+      operationId: sendInvite
+      tags:
+        - Email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipientEmails:
+                  type: array
+                  items:
+                    type: string
+                  description: Lista de correos electrónicos de los destinatarios
+                className:
+                  type: string
+                  description: Nombre de la clase
+                classId:
+                  type: string
+                  description: ID de la clase
+      responses:
+        '200':
+          description: Invitaciones enviadas exitosamente
+        '500':
+          description: Error al enviar las invitaciones

@@ -1,10 +1,9 @@
-const express = require("express");
+const express = require('express');
+const passport = require('passport');
+const nodeRedController = require('../../controllers/nodeRedController');
 const router = express.Router();
 
-// Ruta para acceder a Node-RED
-router.get("/nodered", (req, res) => {
-    // Redirigir al usuario a la interfaz de Node-RED
-    res.redirect('http://127.0.0.1:1880/');
-});
+router.post('/start-nodered', passport.authenticate('jwt', { session: false }), nodeRedController.startNodeRed);
+router.post('/stop-nodered', passport.authenticate('jwt', { session: false }), nodeRedController.stopNodeRed);
 
-module.exports = router
+module.exports = router;

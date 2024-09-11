@@ -1,6 +1,66 @@
 const userService = require("../services/userService");
 const bcrypt = require('bcrypt');
 
+const registerUser = async (req, res) => {
+    const { email, password, role, name } = req.body;
+
+    if (!email || !password || !role || !name) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email, password, role, and name are required'
+        });
+    }
+
+    try {
+        const newUser = await userService.registerUser(email, password, role, name);
+        res.status(201).json({
+            success: true,
+            message: 'User created successfully.',
+            user: {
+                id: newUser._id,
+                email: newUser.email,
+                role: newUser.role,
+                name: newUser.name
+            }
+        });
+    } catch (error) {
+        console.error('Error registering user:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong',
+            error: error.message
+        });
+    }
+};
+
+
+const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email and password are required'
+        });
+    }
+
+    try {
+        const { user, token } = await userService.loginUser(email, password);
+        res.status(200).json({
+            success: true,
+            message: 'Logged in successfully!',
+            token: `Bearer ${token}`,
+            userId: user._id
+        });
+    } catch (error) {
+        console.error('Error logging in user:', error);
+        res.status(401).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 const getAllUsers = async (req, res) => {
 
     try {
@@ -172,7 +232,26 @@ const getUserRole = async (req, res) => {
 };
 
 
+// Controlador para manejar la solicitud de envío de correo de restablecimiento de contraseña
+const sendResetPasswordEmail = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    try {
+        await passwordService.sendResetPasswordEmail(email);
+        res.status(200).json({ message: 'Password reset email sent successfully' });
+    } catch (error) {
+        console.error('Error sending password reset email:', error);
+        res.status(500).json({ message: 'Error sending password reset email', error: error.message });
+    }
+};
+
 module.exports = {
+    registerUser,
+    loginUser,
     getAllUsers,
     getOneUser,
     getUserByEmail,

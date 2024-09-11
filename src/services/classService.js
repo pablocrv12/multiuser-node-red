@@ -1,25 +1,22 @@
-const Clase = require("../models/Class");
-const User = require('../models/User');
-const Flow = require('../models/Flow');
-const mongoose = require('mongoose');
+const classDataAccess = require('../dataAccess/classDataAccess');
+const userDataAccess = require('../dataAccess/userDataAccess');
+const flowDataAccess = require('../dataAccess/flowDataAccess');
 
 const getAllClases = async (userId) => {
-    return await Clase.find({ professor: userId });
+    return await classDataAccess.findByProfessor(userId);
 };
 
 const getOneClase = async (claseId) => {
-    return await Clase.findOne({ _id: claseId });
+    return await classDataAccess.findOneById(claseId);
 };
 
 const getOneClaseByProfessor = async (userId, claseId) => {
-    return await Clase.findOne({ _id: claseId, professor: userId });
+    return await classDataAccess.findOneByIdAndProfessor(userId, claseId);
 };
-
-
 
 const getFlowsByClase = async (classId, role) => {
     try {
-        const classDetails = await Clase.findById({_id: classId}).populate('flows');
+        const classDetails = await classDataAccess.findByIdWithFlows(classId);
         if (!classDetails) {
             throw new Error('Class not found');
         }
@@ -27,7 +24,6 @@ const getFlowsByClase = async (classId, role) => {
         if (role === 'professor') {
             return classDetails.flows;
         } else if (role === 'student') {
-            // Filtramos los flujos donde el userId del flujo sea igual al professor de la clase
             return classDetails.flows.filter(flow => flow.userId.toString() === classDetails.professor.toString());
         } else {
             throw new Error('Role not recognized');
@@ -40,22 +36,20 @@ const getFlowsByClase = async (classId, role) => {
 
 const getAllFlowsByClase = async (classId) => {
     try {
-        const classDetails = await Clase.findById({_id: classId}).populate('flows');
+        const classDetails = await classDataAccess.findByIdWithFlows(classId);
         if (!classDetails) {
             throw new Error('Class not found');
         }
         return classDetails.flows;
     } catch (error) {
-        console.error('Error in getFlowsByClase service:', error);
+        console.error('Error in getAllFlowsByClase service:', error);
         throw error;
     }
 };
 
-
-
 const getJoinedClasses = async (userId) => {
     try {
-        const user = await User.findById(userId).populate('joinedClasses');
+        const user = await userDataAccess.findByIdAndUpdate(userId, { $addToSet: { joinedClasses: classId } });
         if (!user) {
             throw new Error('User not found');
         }
@@ -66,10 +60,9 @@ const getJoinedClasses = async (userId) => {
     }
 };
 
-// Servicio para obtener todos los estudiantes de una clase por su ID
 const getStudentsByClassId = async (classId) => {
     try {
-        const classDetails = await Clase.findById(classId).populate('students', 'name email');
+        const classDetails = await classDataAccess.findByIdWithStudents(classId);
         if (!classDetails) {
             throw new Error('Class not found');
         }
@@ -80,13 +73,9 @@ const getStudentsByClassId = async (classId) => {
     }
 };
 
-
-
-
 const createNewClase = async (newClase) => {
     try {
-        const createdClase = await Clase.create(newClase);
-        return createdClase;
+        return await classDataAccess.create(newClase);
     } catch (error) {
         throw error;
     }
@@ -94,40 +83,36 @@ const createNewClase = async (newClase) => {
 
 const addFlow = async (classId, flowId) => {
     try {
-        // Buscar la clase por su ID
-        const clase = await Clase.findById(classId);
-
-        // Verificar si la clase existe
+        // Buscar la clase
+        const clase = await classDataAccess.findOneById(classId);
         if (!clase) {
-            throw new Error('Clase no encontrada');
+            throw new Error('Class not found');
         }
 
-        // Agregar el flow a la lista de flows de la clase
-        clase.flows.push(flowId);
-
-        // Guardar los cambios en la base de datos
-        await clase.save();
-        // Buscar el flow por su ID y agregar la clase a su lista de clases
-        const flow = await Flow.findById(flowId);
-        
+        // Buscar el flujo
+        const flow = await flowDataAccess.findOneById(flowId);
         if (!flow) {
-            throw new Error('Flow no encontrado');
+            throw new Error('Flow not found');
         }
 
+        // Agregar el flujo a la clase
+        await classDataAccess.addFlow(classId, flowId);
+
+        // Agregar la clase al flujo
         flow.classes.push(classId);
         await flow.save();
 
-        // Mensaje de éxito
-        return { mensaje: 'Flujo agregado correctamente' };
+        return { message: 'Flow added successfully' };
     } catch (error) {
-        console.error('Error al agregar flujo:', error);
-        throw new Error('Error interno del servidor');
+        console.error('Error adding flow:', error);
+        throw new Error('Internal server error');
     }
 };
 
+
 const updateClase = async (userId, classId, changes) => {
     try {
-        return await Clase.findOneAndUpdate({ _id: classId, professor: userId }, changes, { new: true });
+        return await classDataAccess.update(userId, classId, changes);
     } catch (error) {
         throw new Error("Failed to update clase in the database");
     }
@@ -135,23 +120,21 @@ const updateClase = async (userId, classId, changes) => {
 
 const deleteClase = async (classId) => {
     try {
-        // Encuentra la clase
-        const clase = await Clase.findById(classId);
+        // Buscar la clase en la base de datos
+        const clase = await classDataAccess.findOneById(classId);
         if (!clase) {
             throw new Error("Class not found");
         }
 
-        // Obtén todos los flujos asociados a la clase
-        const flows = await Flow.find({ classes: classId });
-
-        // Para cada flujo, elimina la clase de su lista de clases y guarda los cambios
+        // Buscar los flujos que están asociados a la clase
+        const flows = await flowDataAccess.findFlowsByClassId(classId);
         for (const flow of flows) {
             flow.classes.pull(classId);
             await flow.save();
         }
 
-        // Elimina la clase
-        await Clase.findByIdAndDelete(classId);
+        // Eliminar la clase
+        await classDataAccess.findByIdAndDelete(classId);
 
         console.log("Class and related references deleted successfully");
         return { message: "Class deleted successfully" };
@@ -161,37 +144,32 @@ const deleteClase = async (classId) => {
 };
 
 const ejectStudentFromClass = async (classId, userId) => {
-    // Eliminar al estudiante de la lista de students de la clase
-    await Clase.findByIdAndUpdate(classId, { $pull: { students: userId } });
-
-    // Eliminar la clase de la lista de joinedClasses del estudiante
-    await User.findByIdAndUpdate(userId, { $pull: { joinedClasses: classId } });
+    try {
+        await classDataAccess.ejectStudentFromClass(classId, userId);
+    } catch (error) {
+        throw new Error(`Failed to eject student: ${error.message}`);
+    }
 };
 
 const leaveClass = async (classId, userId) => {
-    // Eliminar al estudiante de la lista de students de la clase
-    await Clase.findByIdAndUpdate(classId, { $pull: { students: userId } });
-
-    // Eliminar la clase de la lista de joinedClasses del estudiante
-    await User.findByIdAndUpdate(userId, { $pull: { joinedClasses: classId } });
+    try {
+        await classDataAccess.ejectStudentFromClass(classId, userId);
+    } catch (error) {
+        throw new Error(`Failed to leave class: ${error.message}`);
+    }
 };
 
 const uploadFlow = async (classId, flowId) => {
-    await Clase.findByIdAndUpdate(classId, { $push: { flows: flowId } });
+    try {
+        await classDataAccess.addFlow(classId, flowId);
+    } catch (error) {
+        throw new Error(`Failed to upload flow: ${error.message}`);
+    }
 };
-
 
 const deleteFlowFromClass = async (classId, flowId) => {
     try {
-        // Eliminar el flujo de la lista de flujos de la clase
-        await Clase.findByIdAndUpdate(classId, { $pull: { flows: flowId } });
-
-        // Eliminar la clase del campo 'classes' del flujo
-        await Flow.findByIdAndUpdate(flowId, { $pull: { classes: classId } });
-        return {
-            success: true,
-            message: `Flow ${flowId} removed from class ${classId} and class removed from flow ${flowId}`
-        };
+        return await classDataAccess.deleteFlowFromClass(classId, flowId);
     } catch (error) {
         console.error('Error removing flow from class or removing class from flow:', error);
         throw new Error('Failed to remove flow from class or update flow');
@@ -200,25 +178,7 @@ const deleteFlowFromClass = async (classId, flowId) => {
 
 const joinClass = async (userId, classId) => {
     try {
-        // Verifica si la clase existe
-        const clase = await Clase.findById(classId);
-        if (!clase) {
-            throw new Error("Clase not found");
-        }
-
-        // Verifica si el usuario ya está en la clase
-        if (clase.students.includes(userId)) {
-            throw new Error("User already joined the class");
-        }
-
-        // Añadir el userId a la lista de estudiantes de la clase
-        clase.students.push(userId);
-        await clase.save();
-
-        // Añadir el classId a la lista de clases a las que pertenece el usuario
-        await User.findByIdAndUpdate(userId, { $addToSet: { joinedClasses: classId } });
-
-        return clase;
+        return await classDataAccess.joinClass(userId, classId);
     } catch (error) {
         throw new Error(`Failed to join class: ${error.message}`);
     }
@@ -241,4 +201,4 @@ module.exports = {
     deleteFlowFromClass,
     leaveClass,
     joinClass
-}
+};

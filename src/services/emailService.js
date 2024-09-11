@@ -22,7 +22,7 @@ const sendInviteEmail = (recipientEmail, className, inviteLink) => {
             subject: `Multiuser-NodeRED - Invitación a la clase ${className}`,
             text: `Has sido invitado a unirte a la clase ${className}. Utiliza el siguiente código para unirte a la clase: ${inviteLink}
             
-            Regístrate o inicia sesión aquí: https://frontend-service-830425129942.europe-west1.run.app`
+            Regístrate o inicia sesión aquí: https://multi-node-red-830425129942.europe-west1.run.app`
         };
 
         transporter.sendMail(mailOptions, (error, info) => {
