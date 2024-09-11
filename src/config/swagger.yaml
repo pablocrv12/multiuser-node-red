@@ -119,7 +119,7 @@ paths:
 
   /class/{classId}/flows:
     get:
-      summary: Obtener flujos por ID de clase
+      summary: Obtener flujos por ID de clase por rol para Node-RED
       operationId: getFlowsByClase
       tags:
         - Clases
@@ -134,10 +134,10 @@ paths:
         '200':
           description: Lista de flujos obtenida exitosamente
 
-  /class/{classId}/flowsStudent:
+  /class/{classId}/allFlows:
     get:
-      summary: Obtener flujos de estudiantes por ID de clase
-      operationId: getFlowsByClaseandStudent
+      summary: Obtener todos los flujos por ID de clase
+      operationId: getAllFlowsByClase
       tags:
         - Clases
       parameters:
@@ -627,3 +627,15 @@ paths:
           description: Contenedor Node-RED iniciado exitosamente
         '500':
           description: Error al iniciar el contenedor Node-RED
+
+  /nodered/stop-nodered:
+    post:
+      summary: Detener un contenedor Node-RED
+      operationId: stopNodeRed
+      tags:
+        - Node-RED
+      responses:
+        '200':
+          description: Contenedor Node-RED detenido exitosamente
+        '500':
+          description: Error al detener el contenedor Node-RED

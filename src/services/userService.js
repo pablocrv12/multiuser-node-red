@@ -58,16 +58,6 @@ const getFlowsByUser = async (userId) => {
 };
 
 
-// Crear un nuevo usuario
-const createNewUser = async (newUser) => {
-    try {
-        const createdUser = await User.create(newUser);
-        return createdUser;
-    } catch (error) {
-        throw error;
-    }
-};
-
 // Actualizar el usuario el cuál se pasa el Id por parámetro
 const updateUser = async (userId, changes) => {
     try {
@@ -104,7 +94,6 @@ module.exports = {
     getJoinedClasses,
     getCreatedClasses,
     getFlowsByUser,
-    createNewUser,
     updateUser,
     deleteUser,
     getUserRole

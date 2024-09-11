@@ -15,6 +15,8 @@ const getOneClaseByProfessor = async (userId, claseId) => {
     return await Clase.findOne({ _id: claseId, professor: userId });
 };
 
+
+
 const getFlowsByClase = async (classId, role) => {
     try {
         const classDetails = await Clase.findById({_id: classId}).populate('flows');
@@ -36,21 +38,19 @@ const getFlowsByClase = async (classId, role) => {
     }
 };
 
-const getFlowsByClaseandStudent = async (classId, userId) => {
+const getAllFlowsByClase = async (classId) => {
     try {
-
-        // Convertir classId a ObjectId
-        const classObjectId = new mongoose.Types.ObjectId(classId);
-        const userObjectId = new mongoose.Types.ObjectId(userId);
-console.log(classObjectId);
-console.log(userObjectId);
-        // Obtener los flujos del usuario que pertenecen a esta clase
-        const flows = await Flow.find({ userId: userObjectId, classes: classObjectId });
-        return flows;
+        const classDetails = await Clase.findById({_id: classId}).populate('flows');
+        if (!classDetails) {
+            throw new Error('Class not found');
+        }
+        return classDetails.flows;
     } catch (error) {
+        console.error('Error in getFlowsByClase service:', error);
         throw error;
     }
 };
+
 
 
 const getJoinedClasses = async (userId) => {
@@ -182,15 +182,20 @@ const uploadFlow = async (classId, flowId) => {
 
 
 const deleteFlowFromClass = async (classId, flowId) => {
-    // Eliminar el flujo de la lista de flujos de la clase
-    console.log(classId)
-    console.log(flowId)
-    await Clase.findByIdAndUpdate(classId, { $pull: { flows: flowId } });
+    try {
+        // Eliminar el flujo de la lista de flujos de la clase
+        await Clase.findByIdAndUpdate(classId, { $pull: { flows: flowId } });
 
-    return {
-        success: true,
-        data: `Flow ${flowId} removed from class ${classId}`
-    };
+        // Eliminar la clase del campo 'classes' del flujo
+        await Flow.findByIdAndUpdate(flowId, { $pull: { classes: classId } });
+        return {
+            success: true,
+            message: `Flow ${flowId} removed from class ${classId} and class removed from flow ${flowId}`
+        };
+    } catch (error) {
+        console.error('Error removing flow from class or removing class from flow:', error);
+        throw new Error('Failed to remove flow from class or update flow');
+    }
 };
 
 const joinClass = async (userId, classId) => {
@@ -226,7 +231,7 @@ module.exports = {
     addFlow,
     getOneClaseByProfessor,
     getFlowsByClase,
-    getFlowsByClaseandStudent,
+    getAllFlowsByClase,
     getJoinedClasses,
     uploadFlow,
     createNewClase,

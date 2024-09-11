@@ -87,24 +87,6 @@ const getFlowsByUser = async (req, res) => {
 
 
 
-const createNewUser = async (req, res) => {
-    const { body } = req;
-    
-    if (!body.name) {
-        return res.status(400).send({ status: "Error", message: "Name is required" });
-    }
-
-    const newUser = { name: body.name, description: body.description };
-
-    try {
-        const createdUser = await userService.createNewUser(newUser);
-        res.status(201).send({ status: "OK", data: createdUser });
-    } catch (error) {
-        console.error("Error creating new user:", error);
-        res.status(500).send({ status: "Error", message: "Failed to create new user" });
-    }
-};
-
 const updateUser = async (req, res) => {
     try {
         const { body, params: { userId } } = req;
@@ -197,7 +179,6 @@ module.exports = {
     getJoinedClasses,
     getCreatedClasses,
     getFlowsByUser,
-    createNewUser,
     updateUser,
     deleteUser,
     getUserRole

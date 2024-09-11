@@ -13,7 +13,7 @@ router
   .post('/:classId/uploadFlow/:flowId', passport.authenticate('jwt', { session: false }), classController.addFlow)
   .get("/:classId", passport.authenticate('jwt', { session: false }), classController.getOneClaseByProfessor)
   .get("/:classId/flows", passport.authenticate('jwt', { session: false }), classController.getFlowsByClase)
-  .get("/:classId/flowsStudent", passport.authenticate('jwt', { session: false }), classController.getFlowsByClaseandStudent)
+  .get("/:classId/AllFlows", passport.authenticate('jwt', { session: false }), classController.getAllFlowsByClase)
   .post("/", passport.authenticate('jwt', { session: false }), classController.createNewClase)
   .patch("/:classId", passport.authenticate('jwt', { session: false }), classController.updateClase)
   .patch("/:classId/eject/:userId", passport.authenticate('jwt', { session: false }), classController.ejectStudentFromClass)

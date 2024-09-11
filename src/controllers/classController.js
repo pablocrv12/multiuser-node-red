@@ -76,11 +76,10 @@ const getFlowsByClase = async (req, res) => {
     }
 };
 
-const getFlowsByClaseandStudent = async (req, res) => {
+const getAllFlowsByClase = async (req, res) => {
     try {
-        const userId = req.user._id;
         const { classId } = req.params;
-        const flows = await classService.getFlowsByClaseandStudent(classId, userId);
+        const flows = await classService.getAllFlowsByClase(classId);
         res.status(200).json({status: "Ok", data: flows});
     } catch (error) {
         console.error('Error fetching flows by class ID:', error);
@@ -154,13 +153,13 @@ const updateClase = async (req, res) => {
 };
 
 const deleteClase = async (req, res) => {
-    const userId = req.user._id;  // Asegúrate de que estás obteniendo el userId correctamente
+    const userId = req.user._id;
     const { classId } = req.params;
 
     console.log(`Attempting to delete clase with ID: ${classId} by user: ${userId}`);
 
     try {
-        const deletedClase = await classService.deleteClase(userId, classId);
+        const deletedClase = await classService.deleteClase(classId);
         res.status(200).send({ status: "OK", data: deletedClase });
     } catch (error) {
         console.error("Error deleting clase:", error);
@@ -201,12 +200,10 @@ const uploadFlow = async (req, res) => {
 
 const deleteFlowFromClass = async (req, res) => {
     const { classId, flowId } = req.params;
-    console.log("aquji  ")
-    console.log(classId)
-    console.log(flowId)
+    console.log("awae")
     try {
         const result = await classService.deleteFlowFromClass(classId, flowId);
-        res.status(200).json({ message: "Student ejected from class successfully" });
+        res.status(200).json({ message: "Flow deleted from class successfully" });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
@@ -235,7 +232,7 @@ module.exports = {
     addFlow,
     getOneClaseByProfessor,
     getFlowsByClase,
-    getFlowsByClaseandStudent,
+    getAllFlowsByClase,
     createNewClase,
     uploadFlow,
     updateClase,
