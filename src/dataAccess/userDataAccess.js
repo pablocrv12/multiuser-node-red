@@ -1,6 +1,5 @@
 const User = require('../models/User');
 
-// Crear un nuevo usuario en la base de datos
 const createUser = async (userData) => {
     return await User.create(userData);
 };

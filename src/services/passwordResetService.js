@@ -11,7 +11,7 @@ const generateResetToken = () => {
 
 
 const sendResetPasswordEmail = async (email) => {
-    // Generar un token de restablecimiento
+    // Generar eñ token de recuperación
     const resetToken = generateResetToken();
     const expiresAt = new Date(Date.now() + 3600000); // El token expira en 1 hora
 
@@ -56,7 +56,7 @@ const resetPassword = async (token, newPassword) => {
         // Actualizar el usuario con la nueva contraseña
         await userDataAccess.findByIdAndUpdate(user._id, { password: hashedPassword });
 
-        // Eliminar el registro de token después de usarlo
+        // Eliminar el token después de usarlo
         await passwordResetDataAccess.deleteResetToken(token);
     } catch (error) {
         throw new Error(`Failed to reset password: ${error.message}`);

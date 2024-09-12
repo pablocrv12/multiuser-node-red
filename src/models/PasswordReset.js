@@ -1,4 +1,3 @@
-// Ejemplo de esquema en MongoDB con Mongoose
 const mongoose = require('mongoose');
 
 const passwordResetSchema = new mongoose.Schema(

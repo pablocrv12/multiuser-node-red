@@ -1,5 +1,4 @@
 const authorize = (roles = []) => {
-    // roles param can be a single role string (e.g. 'admin') or an array of roles (e.g. ['admin', 'user'])
     if (typeof roles === 'string') {
         roles = [roles];
     }
@@ -16,7 +15,7 @@ const authorize = (roles = []) => {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
 
-            // Si el usuario tiene los roles necesarios, procedemos
+            // Si el usuario tiene los roles necesarios, se continúa
             next();
         }
     ];

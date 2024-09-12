@@ -126,7 +126,7 @@ const deleteClase = async (classId) => {
             throw new Error("Class not found");
         }
 
-        // Buscar los flujos que están asociados a la clase
+        // Buscar los flujos de la clase
         const flows = await flowDataAccess.findFlowsByClassId(classId);
         for (const flow of flows) {
             flow.classes.pull(classId);

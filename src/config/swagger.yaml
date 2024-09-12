@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
-  title: API de Clases, Flows y Usuarios
+  title: API de Clases, Flows, Usuarios, Reset Password, Node-RED y emails
   version: 1.0.0
-  description: API para la gestión de clases, flows, Node-RED y usuarios en la plataforma.
+  description: API para la gestión de clases, flows, Node-RED, recuperación de contraseñas, emails y usuarios en la plataforma.
 
 servers:
-  - url: http://localhost:3000/api/v1
-    description: Servidor local
+  - url: https://backend-service-830425129942.europe-west1.run.app/api/v1
+    description: Servidor en la nube
 
 paths:
   /class:

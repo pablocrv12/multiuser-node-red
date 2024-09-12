@@ -30,7 +30,7 @@ const loginUser = async (email, password) => {
             throw new Error('Could not find the user.');
         }
 
-        // Verificar la contraseña
+        // Comprobar la contraseña
         if (!compareSync(password, user.password)) {
             throw new Error('Incorrect password');
         }

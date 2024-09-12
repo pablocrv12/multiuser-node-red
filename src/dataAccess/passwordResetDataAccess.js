@@ -9,7 +9,7 @@ const create = async (data) => {
 const findResetRecord = async (token) => {
     return await PasswordReset.findOne({
         token,
-        expiresAt: { $gt: Date.now() } // Verificar que el token no ha expirado
+        expiresAt: { $gt: Date.now() } // Comprobar que el token no ha expirado
     }).exec();
 };
 

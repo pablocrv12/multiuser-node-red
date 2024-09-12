@@ -1,5 +1,7 @@
 const nodeRedService = require('../services/nodeRedService');
 
+
+
 const startNodeRed = async (req, res) => {
     const userId = req.user._id;
     const token = req.headers.authorization.split(' ')[1];

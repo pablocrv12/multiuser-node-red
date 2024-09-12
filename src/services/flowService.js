@@ -1,36 +1,35 @@
-const Flow = require("../models/Flow");
-const Clase = require("../models/Class");
-const User = require("../models/User");
+const flowDataAccess = require('../dataAccess/flowDataAccess');
+const userDataAccess = require('../dataAccess/userDataAccess');
 
 const getAllFlows = async (userId) => {
-    return await Flow.find({ userId });
+    return await flowDataAccess.findByUserId(userId);
 };
 
 const getOneFlow = async (flowId) => {
-    return await Flow.findOne({ _id: flowId });
+    return await flowDataAccess.findOneById(flowId);
 };
 
 const getClassesByFlow = async (flowId) => {
     try {
-        // Buscar el flujo por su ID y proyectar solo el campo 'classes'
-        const flow = await Flow.findById(flowId).select('classes');
+        const flow = await flowDataAccess.findByIdWithClasses(flowId);
 
         // Si no se encuentra el flujo, lanzar un error
         if (!flow) {
             throw new Error('Flow not found');
         }
 
-        // Retornar la lista de clases asociadas al flujo
+        // Devolver la lista de clases del flujo
         return flow.classes;
     } catch (error) {
         console.error('Error in getClassesByFlow service:', error);
         throw error;
     }
 };
+
 const getUserByFlow = async (flowId) => {
     try {
         // Buscar el flujo por su ID
-        const flow = await Flow.findById(flowId);
+        const flow = await flowDataAccess.findOneById(flowId);
 
         // Si no se encuentra el flujo, lanzar un error
         if (!flow) {
@@ -38,9 +37,9 @@ const getUserByFlow = async (flowId) => {
         }
 
         // Si coincide, buscar al usuario por su ID
-        const user = await User.findById(flow.userId);
+        const user = await userDataAccess.findById(flow.userId);
 
-        // Retornar el usuario completo
+        // Devolver el usuario completo
         return user;
     } catch (error) {
         console.error('Error in getUserByFlow service:', error);
@@ -50,8 +49,7 @@ const getUserByFlow = async (flowId) => {
 
 const createNewFlow = async (newFlow) => {
     try {
-        const createdFlow = await Flow.create(newFlow);
-        return createdFlow;
+        return await flowDataAccess.create(newFlow);
     } catch (error) {
         throw error;
     }
@@ -60,21 +58,22 @@ const createNewFlow = async (newFlow) => {
 const updateFlow = async (userId, flowId, changes) => {
     try {
         changes.last_update = new Date().toLocaleString("en-US", { timeZone: "UTC" });
-        return await Flow.findOneAndUpdate({ _id: flowId, userId }, changes, { new: true });
+        return await flowDataAccess.findOneAndUpdate(userId, flowId, changes);
     } catch (error) {
         throw new Error("Failed to update flow in the database");
     }
 };
+
 const deleteFlow = async (userId, flowId) => {
     try {
         // Eliminar el flujo de la base de datos
-        const deletedFlow = await Flow.findOneAndDelete({ _id: flowId, userId });
+        const deletedFlow = await flowDataAccess.findOneAndDelete(userId, flowId);
         if (!deletedFlow) {
             throw new Error("Flow not found");
         }
 
         // Encuentra al usuario por su ID
-        const user = await User.findById(userId);
+        const user = await userDataAccess.findById(userId);
         if (!user) {
             throw new Error("User not found");
         }
@@ -100,4 +99,4 @@ module.exports = {
     createNewFlow,
     updateFlow,
     deleteFlow
-}
+};

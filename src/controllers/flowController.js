@@ -36,10 +36,10 @@ const getClassesByFlow = async (req, res) => {
     const { flowId } = req.params;
 
     try {
-        // Obtener la lista de clases asociadas al flujo dado
+        // Obtener la lista de clases del flujo dado
         const classes = await flowService.getClassesByFlow(flowId);
 
-        // Responder con la lista de clases
+        // Devolver la lista de clases
         res.status(200).json({ status: 'OK', data: classes });
     } catch (error) {
         console.error('Error retrieving classes by flow:', error);
@@ -52,8 +52,8 @@ const getUserByFlow = async (req, res) => {
     const { params: { flowId } } = req;
 
     try {
-        // Obtener la lista de clases asociadas al flujo dado
-        const user = await flowService.getUserByFlow(flowId); // Pasar userId al servicio
+        // Obtener la lista de clases del flujo dado
+        const user = await flowService.getUserByFlow(flowId);
 
         // Responder con la lista de clases
         res.status(200).json({ status: 'OK', data: user });
@@ -111,7 +111,7 @@ const updateFlow = async (req, res) => {
 };
 
 const deleteFlow = async (req, res) => {
-    const userId = req.user._id; // Obtener el userId del usuario autenticado
+    const userId = req.user._id;
     const { params: { flowId } } = req;
 
     try {

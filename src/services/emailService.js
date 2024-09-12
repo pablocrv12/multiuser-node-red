@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Función para enviar correo de invitación
+// Enviar correo de invitación
 const sendInviteEmail = (recipientEmail, className, inviteLink) => {
     return new Promise((resolve, reject) => {
         const mailOptions = {
@@ -36,8 +36,7 @@ const sendInviteEmail = (recipientEmail, className, inviteLink) => {
     });
 };
 
-// Función para enviar correo de restablecimiento de contraseña
-// Función para enviar correo de recuperación de contraseña
+// Enviar correo de recuperación de contraseña
 const sendResetPasswordEmail = (recipientEmail, resetLink) => {
     return new Promise((resolve, reject) => {
         const mailOptions = {

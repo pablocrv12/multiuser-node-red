@@ -156,7 +156,7 @@ const updateUser = async (req, res) => {
             return res.status(400).json({ status: "Error", message: "User ID is required" });
         }
 
-        // Si solo se proporciona la nueva contraseña (sin contraseña actual)
+        // Si solo se proporciona la nueva contraseña
         if (newPassword && !currentPassword) {
             const hashedPassword = await bcrypt.hash(newPassword, 10);
             otherUpdates.password = hashedPassword;
@@ -232,7 +232,6 @@ const getUserRole = async (req, res) => {
 };
 
 
-// Controlador para manejar la solicitud de envío de correo de restablecimiento de contraseña
 const sendResetPasswordEmail = async (req, res) => {
     const { email } = req.body;
 
