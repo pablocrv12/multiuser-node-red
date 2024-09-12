@@ -1,41 +1,54 @@
-const nodeRedService = require('../services/nodeRedService');
+const noderedService = require('../services/nodeRedService');
 
-
-
-const startNodeRed = async (req, res) => {
+// Controlador para iniciar Node-RED
+const startNodered = async (req, res) => {
     const userId = req.user._id;
-    const token = req.headers.authorization.split(' ')[1];
+    const token = req.headers.authorization.split(' ')[1]; // Obtener el token sin "Bearer"
 
     try {
-        const response = await nodeRedService.startNodeRed(userId, token);
-        res.status(200).send(response);
+        const { containerId, port } = await noderedService.startNoderedContainer(userId, token);
+        
+        // Construir la URL del contenedor Node-RED
+        const nodeRedUrl = `http://localhost:${port}`;
+
+        return res.status(200).send({
+            success: true,
+            message: 'Node-RED container started successfully',
+            containerId,
+            url: nodeRedUrl
+        });
     } catch (error) {
-        console.error(`Error launching Node-RED container: ${error}`);
-        res.status(500).send({
+        console.error(`Error launching Node-RED container: ${error.message}`);
+        return res.status(500).send({
             success: false,
             message: 'Error launching Node-RED container',
-            error: error.message,
+            error: error.message
         });
     }
 };
 
-const stopNodeRed = async (req, res) => {
+
+// Controlador para detener Node-RED
+const stopNodered = async (req, res) => {
     const userId = req.user._id;
 
     try {
-        const response = await nodeRedService.stopNodeRed(userId);
-        res.status(200).send(response);
+        await noderedService.stopNoderedContainer(userId);
+        return res.status(200).send({
+            success: true,
+            message: 'Node-RED container stopped and removed successfully'
+        });
     } catch (error) {
-        console.error(`Error stopping Node-RED service: ${error}`);
-        res.status(500).send({
+        console.error(`Error stopping Node-RED container: ${error.message}`);
+        return res.status(500).send({
             success: false,
-            message: 'Error stopping Node-RED service',
-            error: error.message,
+            message: 'Error stopping Node-RED container',
+            error: error.message
         });
     }
 };
 
 module.exports = {
-    startNodeRed,
-    stopNodeRed,
+    startNodered,
+    stopNodered
 };
