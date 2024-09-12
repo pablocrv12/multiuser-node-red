@@ -22,7 +22,7 @@ const sendResetPasswordEmail = async (email) => {
         expiresAt
     });
 
-    const resetLink = `https://multi-node-red-830425129942.europe-west1.run.app/changePassword?token=${resetToken}`;
+    const resetLink = `https://multi-node-red-830425129942.europe-west1.run.app/cambiarContrasena?token=${resetToken}`;
 
     // Enviar el correo electrónico con el enlace de recuperación
     await emailService.sendResetPasswordEmail(email, resetLink);
