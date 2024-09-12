@@ -35,7 +35,7 @@ require('./config/passport');
 
 
 // Ruta al archivo de la cuenta de servicio
-const keyFilePath = path.join(__dirname, 'multiuser-node-red-a7bc8e2d8abd.json');
+const keyFilePath = path.join(__dirname, 'multiuser-node-red-3041b16ad5a3.json');
         
 
 // Función para ejecutar comandos
